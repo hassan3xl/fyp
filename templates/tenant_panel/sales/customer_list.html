@@ -1,0 +1,109 @@
+{% extends "store_base.html" %} {% block title %}Customers -
+{{request.tenant.name }}{% endblock title %} {% block content %}
+<div class="mb-8 flex flex-col gap-2">
+  <h1 class="text-3xl font-bold tracking-tight">Customers</h1>
+  <p class="text-muted-foreground">
+    Manage shopper database, contact details, and checkout association profiles.
+  </p>
+</div>
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <!-- Add Customer Form -->
+  <div class="rounded-lg border border-border bg-card p-6 shadow-sm h-fit">
+    <h3 class="font-semibold text-lg mb-6 pb-2 border-b border-border">
+      Add Customer
+    </h3>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label for="name" class="block text-sm font-medium mb-1.5"
+          >Full Name</label
+        >
+        <input
+          type="text"
+          name="name"
+          id="name"
+          class="shadcn-input"
+          placeholder="e.g. John Doe"
+          required
+        />
+      </div>
+
+      <div>
+        <label for="phone" class="block text-sm font-medium mb-1.5"
+          >Phone Number</label
+        >
+        <input
+          type="text"
+          name="phone"
+          id="phone"
+          class="shadcn-input"
+          placeholder="e.g. +1234567890"
+          required
+        />
+      </div>
+
+      <div>
+        <label for="email" class="block text-sm font-medium mb-1.5"
+          >Email Address</label
+        >
+        <input
+          type="email"
+          name="email"
+          id="email"
+          class="shadcn-input"
+          placeholder="e.g. john@example.com"
+        />
+      </div>
+
+      <button type="submit" class="w-full shadcn-btn py-2 text-sm">
+        Add Customer
+      </button>
+    </form>
+  </div>
+
+  <!-- Customers Directory Table -->
+  <div
+    class="rounded-lg border border-border bg-card shadow-sm overflow-hidden lg:col-span-2"
+  >
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr
+            class="border-b border-border bg-secondary/50 text-muted-foreground text-xs uppercase font-semibold"
+          >
+            <th class="p-4">Customer Name</th>
+            <th class="p-4">Phone Number</th>
+            <th class="p-4">Email</th>
+            <th class="p-4">Date Registered</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          {% for customer in customers %}
+          <tr>
+            <td class="p-4 font-semibold text-foreground">
+              {{ customer.name }}
+            </td>
+            <td class="p-4 text-muted-foreground">{{ customer.phone }}</td>
+            <td class="p-4 text-muted-foreground">
+              {{ customer.email|default:"No email set" }}
+            </td>
+            <td class="p-4 text-muted-foreground">
+              {{ customer.created_at|date:"M d, Y" }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="p-12 text-center text-muted-foreground">
+              <i class="fas fa-users text-4xl mb-3 opacity-50"></i>
+              <p>No customers registered in database.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock content %}

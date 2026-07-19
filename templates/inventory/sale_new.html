@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Record Sale | {{ tenant_name }}{% endblock %}
+{% block page_header %}Record New Sale{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">
+        Record New Transaction
+    </h2>
+
+    {% if error %}
+        <div class="alert alert-error">
+            <span>{{ error }}</span>
+        </div>
+    {% endif %}
+
+    <form method="POST" id="sale-form">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+        <div id="items-container">
+            <div class="sale-item-row grid grid-cols-[2.5fr_1fr_1fr_auto] gap-4 items-end mb-4">
+                <div class="form-group mb-0">
+                    <label class="form-label">Select Product</label>
+                    <select name="product_ids" class="form-input product-select" required>
+                        <option value="">Select a Product</option>
+                        {% for product in products %}
+                            <option value="{{ product.id }}" data-price="{{ product.unit_price }}" data-qty="{{ product.quantity }}">
+                                {{ product.name }} (₦{{ product.unit_price }}) - In Stock: {{ product.quantity }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Available</label>
+                    <input type="text" class="form-input available-display" readonly placeholder="0">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" name="quantities" class="form-input qty-input" min="1" required placeholder="Qty">
+                </div>
+
+                <button type="button" class="btn btn-danger remove-row-btn p-3 mb-0 hidden">
+                    &times;
+                </button>
+            </div>
+        </div>
+
+        <div style="margin: 24px 0; display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn btn-secondary" id="add-row-btn">
+                + Add Item
+            </button>
+            <div class="text-right">
+                <span class="text-[var(--text-secondary)] text-sm font-medium">Estimated Total:</span>
+                <span id="estimated-total" class="text-[var(--accent-green)] text-2xl font-bold ml-2">₦0.00</span>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-8 justify-end border-t border-[var(--border-color)] pt-6">
+            <a href="{{ url('inventory:sale_list') }}" class="btn btn-secondary">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-primary" id="btn-submit-sale">
+                Complete Sale
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const itemsContainer = document.getElementById('items-container');
+        const addRowBtn = document.getElementById('add-row-btn');
+        const estimatedTotal = document.getElementById('estimated-total');
+
+        function updateAvailableQty(selectEl) {
+            const row = selectEl.closest('.sale-item-row');
+            const availableInput = row.querySelector('.available-display');
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            if (selectedOpt && selectedOpt.value) {
+                availableInput.value = selectedOpt.dataset.qty;
+                const qtyInput = row.querySelector('.qty-input');
+                qtyInput.max = selectedOpt.dataset.qty;
+            } else {
+                availableInput.value = '0';
+            }
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            const rows = itemsContainer.querySelectorAll('.sale-item-row');
+            rows.forEach(row => {
+                const select = row.querySelector('.product-select');
+                const qtyInput = row.querySelector('.qty-input');
+                const selectedOpt = select.options[select.selectedIndex];
+
+                if (selectedOpt && selectedOpt.value && qtyInput.value) {
+                    const price = parseFloat(selectedOpt.dataset.price);
+                    const qty = parseInt(qtyInput.value);
+                    if (!isNaN(price) && !isNaN(qty)) {
+                        total += price * qty;
+                    }
+                }
+            });
+            estimatedTotal.innerText = '₦' + total.toFixed(2);
+        }
+
+        function bindRowEvents(row) {
+            const select = row.querySelector('.product-select');
+            const qtyInput = row.querySelector('.qty-input');
+            const removeBtn = row.querySelector('.remove-row-btn');
+
+            select.addEventListener('change', function() {
+                updateAvailableQty(select);
+            });
+
+            qtyInput.addEventListener('input', calculateTotal);
+
+            removeBtn.addEventListener('click', function() {
+                row.remove();
+                calculateTotal();
+                updateRemoveButtons();
+            });
+        }
+
+        function updateRemoveButtons() {
+            const rows = itemsContainer.querySelectorAll('.sale-item-row');
+            rows.forEach(row => {
+                const removeBtn = row.querySelector('.remove-row-btn');
+                if (rows.length > 1) {
+                    removeBtn.style.display = 'inline-flex';
+                } else {
+                    removeBtn.style.display = 'none';
+                }
+            });
+        }
+
+        // Bind first row
+        bindRowEvents(itemsContainer.querySelector('.sale-item-row'));
+
+        addRowBtn.addEventListener('click', function() {
+            const firstRow = itemsContainer.querySelector('.sale-item-row');
+            const newRow = firstRow.cloneNode(true);
+
+            // Clear values
+            newRow.querySelector('.product-select').selectedIndex = 0;
+            newRow.querySelector('.available-display').value = '';
+            newRow.querySelector('.qty-input').value = '';
+
+            itemsContainer.appendChild(newRow);
+            bindRowEvents(newRow);
+            updateRemoveButtons();
+        });
+    });
+</script>
+{% endblock %}

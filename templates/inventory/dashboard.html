@@ -1,0 +1,100 @@
+{% extends "base.html" %} {% block title %}Dashboard | {{ tenant_name }}{%
+endblock title %} {% block page_header %}Dashboard Overview{% endblock
+page_header %} {% block content %}
+<div class="stats-grid">
+  <div class="card">
+    <div class="card-title">Total Products</div>
+    <div class="card-value">{{ total_products }}</div>
+    <span class="card-badge badge-purple">Active Products</span>
+  </div>
+  <div class="card">
+    <div class="card-title">Categories</div>
+    <div class="card-value">{{ total_categories }}</div>
+    <span class="card-badge badge-blue">Product Classifications</span>
+  </div>
+  <div class="card">
+    <div class="card-title">Low Stock Alert</div>
+    <div
+      class="card-value"
+      style="color: {% if low_stock_count > 0 %}var(--accent-red){% else %}var(--accent-green){% endif %};"
+    >
+      {{ low_stock_count }}
+    </div>
+    <span
+      class="card-badge {% if low_stock_count > 0 %}badge-red{% else %}badge-green{% endif %}"
+    >
+      {% if business_type == 'provision_store' %} &le; Reorder Level {% else %}
+      &le; 5 Units {% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 32px">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    "
+  >
+    <h3 style="font-size: 18px; font-weight: 700">Recent Sales Activity</h3>
+    <a
+      href="{{ url('inventory:sale_new') }}"
+      class="btn btn-primary"
+      style="padding: 8px 16px; font-size: 12px"
+      id="btn-dashboard-new-sale"
+    >
+      + New Sale
+    </a>
+  </div>
+  {% if recent_sales %}
+  <div class="table-container" style="margin-bottom: 0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Sale ID</th>
+          <th>User</th>
+          <th>Total Amount</th>
+          <th>Date & Time</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sale in recent_sales %}
+        <tr>
+          <td
+            style="
+              font-family: monospace;
+              font-size: 12px;
+              color: var(--accent-blue);
+            "
+          >
+            {{ sale.id }}
+          </td>
+          <td>{{ sale.user.username }}</td>
+          <td class="font-semibold text-[var(--accent-green)]">
+            ₦{{ sale.total_amount }}
+          </td>
+          <td>{{ sale.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          <td>
+            <a
+              href="{{ url('inventory:sale_detail', kwargs={'pk': sale.id}) }}"
+              class="btn btn-secondary"
+              style="padding: 6px 12px; font-size: 12px"
+            >
+              View Details
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 40px; color: var(--text-secondary)">
+    No sales recorded yet. Start by generating a sale.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

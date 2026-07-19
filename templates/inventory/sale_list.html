@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Sales History | {{ tenant_name }}{% endblock %}
+{% block page_header %}Sales Registry{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h2 style="font-size: 20px; font-weight: 700; color: var(--text-primary);">All Recorded Sales</h2>
+    <a href="{{ url('inventory:sale_new') }}" class="btn btn-primary" id="btn-new-sale">
+        + Record New Sale
+    </a>
+</div>
+
+{% if sales %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sale ID</th>
+                    <th>Recorded By</th>
+                    <th>Total Amount</th>
+                    <th>Date & Time</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                    <tr>
+                        <td style="font-family: monospace; font-size: 12px; color: var(--accent-blue);">{{ sale.id }}</td>
+                        <td>{{ sale.user.username }}</td>
+                        <td class="font-semibold text-[var(--accent-green)] text-base">₦{{ sale.total_amount }}</td>
+                        <td>{{ sale.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td style="text-align: right;">
+                            <a href="{{ url('inventory:sale_detail', kwargs={'pk': sale.id}) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" id="btn-view-sale-{{ sale.id }}">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="card" style="text-align: center; padding: 60px; color: var(--text-secondary);">
+        <h3>No sales recorded</h3>
+        <p style="margin: 8px 0 20px;">Generate invoice items by recording your first sale transaction.</p>
+        <a href="{{ url('inventory:sale_new') }}" class="btn btn-primary">Record New Sale</a>
+    </div>
+{% endif %}
+{% endblock %}

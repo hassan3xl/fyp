@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Workspace Sign In</h1>
+            <p>Access your isolated inventory environment</p>
+        </div>
+        <form method="POST" action="{{ url('tenants:login') }}">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+            {% if form.non_field_errors() %}
+                <div class="alert alert-error">
+                    <span>{{ form.non_field_errors()[0] }}</span>
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="form-error">{{ field.errors[0] }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;" id="btn-login">
+                Sign In
+            </button>
+
+            <div style="text-align: center; margin-top: 24px; font-size: 14px;">
+                <span style="color: var(--text-secondary)">New business?</span>
+                <a href="{{ url('tenants:register') }}" style="color: var(--accent-purple); text-decoration: none; font-weight: 600; margin-left: 4px;">Create an Account</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

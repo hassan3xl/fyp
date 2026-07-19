@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SaaS Inventory Management{% endblock %}</title>
+    <link rel="stylesheet" href="{{ static('css/style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if request.user.is_authenticated and (not request.user.tenant or request.user.tenant.is_onboarded) %}
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-name">
+                    <span>{{ tenant_name or 'Inventory SaaS' }}</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px;">
+                    {{ business_type or 'General' }}
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item">
+                    <a href="{{ url('inventory:dashboard') }}" class="sidebar-link" id="nav-dashboard">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="{{ url('inventory:product_list') }}" class="sidebar-link" id="nav-products">
+                        Products
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="{{ url('inventory:category_list') }}" class="sidebar-link" id="nav-categories">
+                        Categories
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="{{ url('inventory:sale_list') }}" class="sidebar-link" id="nav-sales">
+                        Sales History
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="{{ url('inventory:sale_new') }}" class="sidebar-link" id="nav-new-sale">
+                        + New Sale
+                    </a>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <form action="{{ url('tenants:logout') }}" method="POST" style="width: 100%;">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-secondary" style="width: 100%; border-color: rgba(255, 23, 68, 0.3); color: var(--accent-red);" id="btn-logout">
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <header class="header">
+                <div class="header-title">
+                    {% block page_header %}Dashboard{% endblock %}
+                </div>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <div class="user-name">{{ request.user.username }}</div>
+                        <div class="user-role">{{ request.user.role|title if request.user.role else 'User' }}</div>
+                    </div>
+                </div>
+            </header>
+            <main class="content-container">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    {% else %}
+        {% block auth_content %}{% endblock %}
+    {% endif %}
+
+    <script>
+        // Active link highlighting
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/dashboard/')) {
+            document.getElementById('nav-dashboard')?.classList.add('active');
+        } else if (currentPath.includes('/products/')) {
+            document.getElementById('nav-products')?.classList.add('active');
+        } else if (currentPath.includes('/categories/')) {
+            document.getElementById('nav-categories')?.classList.add('active');
+        } else if (currentPath.includes('/sales/new/')) {
+            document.getElementById('nav-new-sale')?.classList.add('active');
+        } else if (currentPath.includes('/sales/')) {
+            document.getElementById('nav-sales')?.classList.add('active');
+        }
+    </script>
+</body>
+</html>

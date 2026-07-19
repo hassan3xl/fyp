@@ -1,0 +1,31 @@
+from .auth_views import login_view, logout_view, register_view
+from .dashboard_views import dashboard
+from .product_views import (
+    product_list,
+    product_add,
+    product_edit,
+    product_delete,
+    category_list,
+    category_add,
+    category_delete,
+    sale_list,
+    sale_new,
+    sale_detail,
+)
+
+__all__ = [
+    'login_view',
+    'logout_view',
+    'register_view',
+    'dashboard',
+    'product_list',
+    'product_add',
+    'product_edit',
+    'product_delete',
+    'category_list',
+    'category_add',
+    'category_delete',
+    'sale_list',
+    'sale_new',
+    'sale_detail',
+]

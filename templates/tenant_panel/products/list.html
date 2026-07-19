@@ -1,0 +1,172 @@
+{% extends 'store_base.html' %}
+{% block title %}Products - {{ request.tenant.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-3xl font-bold tracking-tight">Products</h1>
+    <p class="text-muted-foreground">
+      Monitor inventory levels, track batch exipry dates, and manage pricing.
+    </p>
+  </div>
+  
+  <div class="flex items-center gap-2">
+    <a 
+      href="{% url 'store_panel:category_list' tenant_slug=request.tenant.subdomain %}" 
+      class="shadcn-btn-secondary px-4 py-2 text-sm flex items-center gap-2"
+    >
+      <i class="fas fa-tags"></i> Categories
+    </a>
+    <a 
+      href="{% url 'store_panel:product_create' tenant_slug=request.tenant.subdomain %}" 
+      class="shadcn-btn px-4 py-2 text-sm flex items-center gap-2"
+    >
+      <i class="fas fa-plus text-xs"></i> Add Product
+    </a>
+  </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="rounded-lg border border-border bg-card p-4 shadow-sm mb-6">
+  <form method="get" class="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <!-- Search text -->
+    <div class="relative md:col-span-2">
+      <i class="fas fa-search absolute left-3 top-3 text-muted-foreground text-sm"></i>
+      <input 
+        type="text" 
+        name="search" 
+        placeholder="Search products..." 
+        value="{{ search_query|default:'' }}" 
+        class="shadcn-input pl-9"
+      />
+    </div>
+
+    <!-- Category filter -->
+    <div>
+      <select name="category" class="shadcn-input">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Stock Status Filter -->
+    <div class="flex gap-2">
+      <select name="status" class="shadcn-input flex-1">
+        <option value="">All Statuses</option>
+        <option value="expired" {% if selected_status == 'expired' %}selected{% endif %}>Expired</option>
+        <option value="critical" {% if selected_status == 'critical' %}selected{% endif %}>Expiring Soon (&le;7 days)</option>
+        <option value="near_expiry" {% if selected_status == 'near_expiry' %}selected{% endif %}>Near Expiry (&le;30 days)</option>
+        <option value="low" {% if selected_status == 'low' %}selected{% endif %}>Low Stock (&le;5 units)</option>
+        <option value="out_of_stock" {% if selected_status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+      </select>
+      
+      <button type="submit" class="shadcn-btn px-4 py-2 text-sm">
+        Filter
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Product Table -->
+<div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse text-sm">
+      <thead>
+        <tr class="border-b border-border bg-secondary/50 text-muted-foreground text-xs uppercase font-semibold">
+          <th class="p-4 w-16">Image</th>
+          <th class="p-4">Product Info</th>
+          <th class="p-4">Category</th>
+          <th class="p-4">Unit Price</th>
+          <th class="p-4">Stock Level</th>
+          <th class="p-4">Earliest Expiry</th>
+          <th class="p-4 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        {% for product in products %}
+          <tr>
+            <td class="p-4">
+              {% if product.primary_image_url %}
+                <img src="{{ product.primary_image_url }}" alt="{{ product.name }}" class="h-10 w-10 rounded object-cover border border-border" />
+              {% else %}
+                <div class="h-10 w-10 rounded bg-secondary border border-border flex items-center justify-center text-muted-foreground">
+                  <i class="fas fa-box text-xs"></i>
+                </div>
+              {% endif %}
+            </td>
+            <td class="p-4">
+              <div class="font-medium text-foreground">{{ product.name }}</div>
+              <div class="text-xs text-muted-foreground truncate max-w-[200px]">
+                {{ product.description|default:"No description" }}
+              </div>
+            </td>
+            <td class="p-4 text-muted-foreground">{{ product.category.name }}</td>
+            <td class="p-4 font-semibold">${{ product.unit_price }}</td>
+            <td class="p-4">
+              {% if product.stock == 0 %}
+                <span class="inline-flex items-center rounded-full border border-destructive/20 bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">Out of Stock</span>
+              {% elif product.stock <= 5 %}
+                <span class="inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-500">Low Stock ({{ product.stock }})</span>
+              {% else %}
+                <span class="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500">In Stock ({{ product.stock }})</span>
+              {% endif %}
+            </td>
+            <td class="p-4 text-muted-foreground">
+              {% if product.expiry_date %}
+                {% if product.is_expired %}
+                  <span class="text-destructive font-semibold flex items-center gap-1">
+                    <i class="fas fa-times-circle"></i> {{ product.expiry_date|date:"M d, Y" }}
+                  </span>
+                {% else %}
+                  <span>{{ product.expiry_date|date:"M d, Y" }}</span>
+                {% endif %}
+              {% else %}
+                <span class="text-xs italic text-muted-foreground/60">No expiry track</span>
+              {% endif %}
+            </td>
+            <td class="p-4 text-right">
+              <div class="inline-flex items-center gap-2">
+                <a 
+                  href="{% url 'store_panel:product_batches' tenant_slug=request.tenant.subdomain product_id=product.id %}" 
+                  class="text-xs px-2.5 py-1.5 rounded bg-secondary border border-border hover:bg-accent text-foreground transition-all"
+                >
+                  Batches
+                </a>
+                <a 
+                  href="{% url 'store_panel:product_update' tenant_slug=request.tenant.subdomain pk=product.id %}" 
+                  class="text-xs px-2.5 py-1.5 rounded bg-secondary border border-border hover:bg-accent text-foreground transition-all"
+                >
+                  Edit
+                </a>
+                <form 
+                  method="post" 
+                  action="{% url 'store_panel:product_delete' tenant_slug=request.tenant.subdomain pk=product.id %}" 
+                  class="inline"
+                  onSubmit="return confirm('Are you sure you want to delete product {{ product.name }}? This will remove all associated batches and images.');"
+                >
+                  {% csrf_token %}
+                  <button 
+                    type="submit" 
+                    class="text-xs px-2.5 py-1.5 rounded border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+                  >
+                    Delete
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="p-12 text-center text-muted-foreground">
+              <i class="fas fa-box-open text-4xl mb-3 opacity-50"></i>
+              <p>No products found in catalog.</p>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
