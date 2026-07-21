@@ -15,8 +15,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies
+RUN pip install uv
+RUN uv sync --frozen --no-dev
 
 # Copy the rest of the code
 COPY . .

@@ -27,9 +27,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # custome middleware
     'middleware.tenant_middleware.TenantIsolationMiddleware',
-    'middleware.tenant_middleware.TenantThrottleMiddleware',
+    'middleware.throttle_middleware.ThrottleMiddleware',
 ]
+
+THROTTLE_LIMIT = config('THROTTLE_LIMIT', default=10, cast=int)
+
 
 ROOT_URLCONF = 'src.urls'
 
@@ -107,3 +112,7 @@ CACHES = {
 }
 
 SESSION_COOKIE_AGE = 86400  # 24 hours
+
+# Throttle Settings
+
+

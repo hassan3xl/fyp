@@ -63,14 +63,123 @@
                 <div class="header-title">
                     {% block page_header %}Dashboard{% endblock %}
                 </div>
-                <div class="user-profile">
-                    <div class="user-info">
-                        <div class="user-name">{{ request.user.username }}</div>
-                        <div class="user-role">{{ request.user.role|title if request.user.role else 'User' }}</div>
+                <div style="position: relative; display: inline-block;" id="user-profile-menu">
+                    <button id="user-profile-btn" style="background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background-color: var(--bg-tertiary); color: var(--text-primary); transition: var(--transition); border: 2px solid var(--border-color);">
+                        <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </button>
+                    <!-- User Info Dropdown -->
+                    <div id="user-profile-dropdown" style="display: none; position: absolute; right: 0; top: 48px; width: 260px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 1000; padding: 16px;">
+                        <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
+                            <div style="font-weight: 700; font-size: 15px; color: var(--text-primary);">
+                                {% if request.user.profile.first_name or request.user.profile.last_name %}
+                                    {{ request.user.profile.first_name }} {{ request.user.profile.last_name }}
+                                {% else %}
+                                    {{ request.user.email.split('@')[0]|title }}
+                                {% endif %}
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary); word-break: break-all; margin-top: 2px;">{{ request.user.email }}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--text-secondary);">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Role:</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">{{ request.user.role|title if request.user.role else 'User' }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Tenant:</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">{{ request.tenant_name or 'System' }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Plan:</span>
+                                <span style="font-weight: 600; color: var(--accent-green); text-transform: uppercase;">{{ request.plan or 'Standard' }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <script>
+                    (function() {
+                        const btn = document.getElementById('user-profile-btn');
+                        const dropdown = document.getElementById('user-profile-dropdown');
+                        if (btn && dropdown) {
+                            btn.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                const isNone = dropdown.style.display === 'none' || !dropdown.style.display;
+                                dropdown.style.display = isNone ? 'block' : 'none';
+                                if (isNone) {
+                                    btn.style.borderColor = 'var(--accent-green)';
+                                } else {
+                                    btn.style.borderColor = 'var(--border-color)';
+                                }
+                            });
+
+                            document.addEventListener('click', function(e) {
+                                if (!dropdown.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+                                    dropdown.style.display = 'none';
+                                    btn.style.borderColor = 'var(--border-color)';
+                                }
+                            });
+                        }
+                    })();
+                </script>
             </header>
             <main class="content-container">
+                {% if messages %}
+                    <div class="messages-container" style="margin-bottom: 20px;">
+                        {% for message in messages %}
+                            {% if 'rate-limit-' in message.tags %}
+                                <!-- Rate Limit Modal -->
+                                <div id="rate-limit-modal" style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background-color: rgba(9, 9, 11, 0.85); backdrop-filter: blur(8px); transition: opacity 0.3s ease;">
+                                    <div style="background-color: #0b0f19; border: 1px solid rgba(255, 23, 68, 0.3); border-radius: 12px; padding: 32px; max-width: 440px; width: 90%; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5);">
+                                        <div style="width: 64px; height: 64px; background-color: rgba(255, 23, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                            <svg style="width: 32px; height: 32px; color: #ff1744;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                            </svg>
+                                        </div>
+                                        <h3 style="color: #f8fafc; font-size: 20px; font-weight: 700; margin-bottom: 8px; font-family: 'Plus Jakarta Sans', sans-serif;">Rate Limit Exceeded</h3>
+                                        <p style="color: #94a3b8; font-size: 14px; line-height: 1.5; margin-bottom: 24px; font-family: 'Plus Jakarta Sans', sans-serif;">
+                                            You have exceeded the maximum request limit. Please wait a moment before trying again.
+                                        </p>
+                                        <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 24px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); display: inline-block; font-weight: 600; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 24px;">
+                                            Retry in <span style="color: #00e5ff;" id="rate-limit-timer-base">...</span> seconds
+                                        </div>
+                                        <div>
+                                            <button onclick="document.getElementById('rate-limit-modal').remove()" style="background-color: #f8fafc; color: #0b0f19; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background-color 0.2s; width: 100%;">
+                                                Dismiss
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <script>
+                                    (function() {
+                                        const tags = "{{ message.tags }}";
+                                        const match = tags.match(/rate-limit-(\d+)/);
+                                        let timeLeft = match ? parseInt(match[1]) : 60;
+                                        const timerEl = document.getElementById('rate-limit-timer-base');
+                                        if (timerEl) {
+                                            timerEl.innerText = timeLeft;
+                                            const interval = setInterval(() => {
+                                                timeLeft -= 1;
+                                                if (timeLeft <= 0) {
+                                                    clearInterval(interval);
+                                                    document.getElementById('rate-limit-modal')?.remove();
+                                                } else {
+                                                    timerEl.innerText = timeLeft;
+                                                }
+                                            }, 1000);
+                                        }
+                                    })();
+                                </script>
+                            {% else %}
+                                <div class="alert alert-{{ 'error' if 'error' in message.tags else 'info' }}" style="padding: 12px 16px; margin-bottom: 10px; border-radius: 6px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; {% if 'error' in message.tags %}background-color: rgba(255, 23, 68, 0.1); border: 1px solid rgba(255, 23, 68, 0.3); color: #ff1744;{% else %}background-color: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3); color: #00e5ff;{% endif %}">
+                                    <span>{{ message }}</span>
+                                    <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px;">&times;</button>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 {% block content %}{% endblock %}
             </main>
         </div>

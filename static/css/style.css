@@ -4,9 +4,9 @@
     --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
     --bg-tertiary: #f1f5f9;
-    --accent-purple: #6366f1;
-    --accent-blue: #0ea5e9;
-    --accent-green: #10b981;
+    --accent-primary: #1b4332;
+    --accent-blue: #2d6a4f;
+    --accent-green: #52b788;
     --accent-red: #ef4444;
     --text-primary: #0f172a;
     --text-secondary: #475569;
@@ -47,8 +47,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.06) 0%, transparent 40%);
+    background: radial-gradient(circle at 10% 20%, rgba(27, 67, 50, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(45, 106, 79, 0.08) 0%, transparent 40%);
     background-color: #f1f5f9;
     padding: 24px;
 }
@@ -117,7 +117,7 @@ body {
 .sidebar-brand-badge {
     font-size: 10px;
     text-transform: uppercase;
-    background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-blue));
     color: #fff;
     padding: 2px 8px;
     border-radius: 20px;
@@ -148,12 +148,12 @@ body {
 }
 
 .sidebar-link:hover, .sidebar-link.active {
-    background: rgba(124, 77, 255, 0.1);
+    background: rgba(27, 67, 50, 0.15);
     color: var(--text-primary);
 }
 
 .sidebar-link.active {
-    border-left: 3px solid var(--accent-purple);
+    border-left: 3px solid var(--accent-primary);
 }
 
 .sidebar-footer {
@@ -233,7 +233,7 @@ body {
 .card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-md);
-    border-color: rgba(124, 77, 255, 0.3);
+    border-color: rgba(27, 67, 50, 0.3);
 }
 
 .card-title {
@@ -260,9 +260,9 @@ body {
     margin-top: 8px;
 }
 
-.badge-purple {
-    background: rgba(124, 77, 255, 0.15);
-    color: var(--accent-purple);
+.badge-primary {
+    background: rgba(27, 67, 50, 0.15);
+    color: var(--accent-primary);
 }
 
 .badge-blue {
@@ -307,8 +307,8 @@ body {
 
 .form-input:focus {
     outline: none;
-    border-color: var(--accent-purple);
-    box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.2);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.2);
 }
 
 .form-error {
@@ -333,13 +333,13 @@ body {
 }
 
 .btn-primary {
-    background: var(--accent-purple);
+    background: var(--accent-primary);
     color: #fff;
 }
 
 .btn-primary:hover {
-    background: #6200ea;
-    box-shadow: 0 0 12px rgba(124, 77, 255, 0.4);
+    background: #0f3023;
+    box-shadow: 0 0 12px rgba(27, 67, 50, 0.4);
 }
 
 .btn-secondary {

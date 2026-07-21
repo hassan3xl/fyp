@@ -1,31 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rate Limit Exceeded (429)</title>
-    <link rel="stylesheet" href="{{ static('css/style.css') }}">
-</head>
-<body style="display:flex; justify-content:center; align-items:center; height:100vh; background-color:#0b0f19; margin: 0;">
-    <div class="auth-card" style="text-align:center; max-width: 440px;">
-        <h1 style="color:#ff1744; font-size:48px; margin-bottom:16px; font-family: 'Plus Jakarta Sans', sans-serif;">429</h1>
-        <h2 style="margin-bottom:12px; font-family: 'Plus Jakarta Sans', sans-serif; color: #f8fafc;">Rate Limit Exceeded</h2>
-        <p style="color:#94a3b8; margin-bottom:24px; font-family: 'Plus Jakarta Sans', sans-serif;">You have exceeded the maximum request limit for your plan.</p>
-        <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); display:inline-block; font-weight:600; font-family: 'Plus Jakarta Sans', sans-serif; color: #f8fafc;">
-            Please retry in <span style="color:#00e5ff;" id="retry-timer">{{ retry_after }}</span> seconds.
-        </div>
+    <link rel="stylesheet" href="{{ static('css/style.css') }}" />
+  </head>
+  <body
+    style="
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #0b0f19;
+      margin: 0;
+    "
+  >
+    <div class="auth-card" style="text-align: center; max-width: 440px">
+      <h1
+        style="
+          color: #ff1744;
+          font-size: 48px;
+          margin-bottom: 16px;
+          font-family: &quot;Plus Jakarta Sans&quot;, sans-serif;
+        "
+      >
+        429
+      </h1>
+      <h2
+        style="
+          margin-bottom: 12px;
+          font-family: &quot;Plus Jakarta Sans&quot;, sans-serif;
+          color: #f8fafc;
+        "
+      >
+        Rate Limit Exceeded
+      </h2>
+      <p
+        style="
+          color: #94a3b8;
+          margin-bottom: 24px;
+          font-family: &quot;Plus Jakarta Sans&quot;, sans-serif;
+        "
+      >
+        You have exceeded the maximum request limit.
+      </p>
+      <div
+        style="
+          background: rgba(255, 255, 255, 0.05);
+          padding: 16px;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          display: inline-block;
+          font-weight: 600;
+          font-family: &quot;Plus Jakarta Sans&quot;, sans-serif;
+          color: #f8fafc;
+        "
+      >
+        Please retry in
+        <span style="color: #00e5ff" id="retry-timer">{{ retry_after }}</span>
+        seconds.
+      </div>
     </div>
     <script>
-        let timeLeft = parseInt(document.getElementById('retry-timer').innerText);
-        const interval = setInterval(() => {
-            if (timeLeft <= 1) {
-                clearInterval(interval);
-                window.location.reload();
-            } else {
-                timeLeft -= 1;
-                document.getElementById('retry-timer').innerText = timeLeft;
-            }
-        }, 1000);
+      let timeLeft = parseInt(document.getElementById("retry-timer").innerText);
+      const interval = setInterval(() => {
+        if (timeLeft <= 1) {
+          clearInterval(interval);
+          window.location.reload();
+        } else {
+          timeLeft -= 1;
+          document.getElementById("retry-timer").innerText = timeLeft;
+        }
+      }, 1000);
     </script>
-</body>
+  </body>
 </html>
