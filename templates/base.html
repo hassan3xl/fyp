@@ -431,8 +431,20 @@
         </div>
         {% endif %} {% block content %}{% endblock content %}
       </main>
+      <footer class="app-footer" style="padding: 20px 32px; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-secondary); font-size: 13px; background-color: var(--bg-secondary); margin-top: auto;">
+        <p style="margin: 0;">Developed by <span style="font-weight: 600; color: var(--text-primary);">Hassan Saidu</span>, CSC/22U/4159</p>
+      </footer>
     </div>
-    {% else %} {% block auth_content %}{% endblock auth_content %} {% endif %}
+    {% else %}
+    <div style="min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between;">
+      <div style="flex: 1; display: flex; flex-direction: column; width: 100%;">
+        {% block auth_content %}{% endblock auth_content %}
+      </div>
+      <footer class="app-footer" style="padding: 16px 24px; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-secondary); font-size: 13px; background-color: var(--bg-secondary);">
+        <p style="margin: 0;">Developed by <span style="font-weight: 600; color: var(--text-primary);">Hassan Saidu</span>, CSC/22U/4159</p>
+      </footer>
+    </div>
+    {% endif %}
 
     <script>
       // Active link highlighting

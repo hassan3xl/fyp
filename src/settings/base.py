@@ -31,10 +31,11 @@ MIDDLEWARE = [
     # custome middleware
     'middleware.tenant_middleware.TenantIsolationMiddleware',
     'middleware.throttle_middleware.ThrottleMiddleware',
+    'middleware.request_time_middleware.RequestTimingMiddleware',
+
 ]
 
 THROTTLE_LIMIT = config('THROTTLE_LIMIT', default=10, cast=int)
-
 
 ROOT_URLCONF = 'src.urls'
 
