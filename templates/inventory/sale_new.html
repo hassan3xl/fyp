@@ -4,7 +4,7 @@
 {% block page_header %}Record New Sale{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 800px; margin: 0 auto;">
+<div class="card" style="max-width: 850px; margin: 0 auto;">
     <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">
         Record New Transaction
     </h2>
@@ -19,9 +19,10 @@
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
         <div id="items-container">
-            <div class="sale-item-row grid grid-cols-[2.5fr_1fr_1fr_auto] gap-4 items-end mb-4">
+            <div class="sale-item-row grid grid-cols-[2.5fr_1fr_1fr_auto] gap-4 items-start mb-6 pb-4 border-b border-[var(--border-color)]">
                 <div class="form-group mb-0">
-                    <label class="form-label">Select Product</label>
+                    <label class="form-label">Product Search & Select</label>
+                    <input type="text" class="form-input product-search-input mb-2 text-sm" placeholder="🔍 Type to search product name..." style="padding: 8px 12px; margin-bottom: 8px;" />
                     <select name="product_ids" class="form-input product-select" required>
                         <option value="">Select a Product</option>
                         {% for product in products %}
@@ -30,6 +31,7 @@
                             </option>
                         {% endfor %}
                     </select>
+                    <div class="no-match-msg text-xs text-[var(--accent-red)] mt-1.5 hidden font-medium">⚠️ No product match found</div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 0;">
@@ -42,7 +44,7 @@
                     <input type="number" name="quantities" class="form-input qty-input" min="1" required placeholder="Qty">
                 </div>
 
-                <button type="button" class="btn btn-danger remove-row-btn p-3 mb-0 hidden">
+                <button type="button" class="btn btn-danger remove-row-btn p-3 mt-7 hidden" style="height: 42px; width: 42px;">
                     &times;
                 </button>
             </div>
@@ -80,7 +82,7 @@
             const availableInput = row.querySelector('.available-display');
             const selectedOpt = selectEl.options[selectEl.selectedIndex];
             if (selectedOpt && selectedOpt.value) {
-                availableInput.value = selectedOpt.dataset.qty;
+                availableInput.value = selectedOpt.dataset.qty || '0';
                 const qtyInput = row.querySelector('.qty-input');
                 qtyInput.max = selectedOpt.dataset.qty;
             } else {
@@ -95,23 +97,79 @@
             rows.forEach(row => {
                 const select = row.querySelector('.product-select');
                 const qtyInput = row.querySelector('.qty-input');
-                const selectedOpt = select.options[select.selectedIndex];
-
-                if (selectedOpt && selectedOpt.value && qtyInput.value) {
-                    const price = parseFloat(selectedOpt.dataset.price);
-                    const qty = parseInt(qtyInput.value);
-                    if (!isNaN(price) && !isNaN(qty)) {
-                        total += price * qty;
+                if (select.selectedIndex >= 0) {
+                    const selectedOpt = select.options[select.selectedIndex];
+                    if (selectedOpt && selectedOpt.value && qtyInput.value) {
+                        const price = parseFloat(selectedOpt.dataset.price);
+                        const qty = parseInt(qtyInput.value);
+                        if (!isNaN(price) && !isNaN(qty)) {
+                            total += price * qty;
+                        }
                     }
                 }
             });
             estimatedTotal.innerText = '₦' + total.toFixed(2);
         }
 
-        function bindRowEvents(row) {
+        function setupProductSearchAndEvents(row) {
             const select = row.querySelector('.product-select');
+            const searchInput = row.querySelector('.product-search-input');
             const qtyInput = row.querySelector('.qty-input');
             const removeBtn = row.querySelector('.remove-row-btn');
+            const noMatchMsg = row.querySelector('.no-match-msg');
+
+            // Save full options list reference
+            const allOptions = Array.from(select.options).map(opt => ({
+                value: opt.value,
+                text: opt.textContent,
+                price: opt.dataset.price || '',
+                qty: opt.dataset.qty || '',
+                isDefault: opt.value === ""
+            }));
+
+            function filterProducts() {
+                const query = searchInput.value.trim().toLowerCase();
+                const currentVal = select.value;
+                select.innerHTML = '';
+
+                let matchCount = 0;
+
+                allOptions.forEach(optData => {
+                    if (optData.isDefault) {
+                        const opt = document.createElement('option');
+                        opt.value = "";
+                        opt.textContent = "Select a Product";
+                        select.appendChild(opt);
+                    } else if (!query || optData.text.toLowerCase().includes(query)) {
+                        matchCount++;
+                        const opt = document.createElement('option');
+                        opt.value = optData.value;
+                        opt.textContent = optData.text;
+                        opt.dataset.price = optData.price;
+                        opt.dataset.qty = optData.qty;
+                        select.appendChild(opt);
+                    }
+                });
+
+                if (query && matchCount === 0) {
+                    // No match found -> return nothing!
+                    select.value = "";
+                    noMatchMsg.classList.remove('hidden');
+                    noMatchMsg.textContent = 'No product match for "' + searchInput.value + '"';
+                } else {
+                    noMatchMsg.classList.add('hidden');
+                    // Try to preserve current selection if still valid
+                    if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+                        select.value = currentVal;
+                    } else if (query && matchCount === 1) {
+                        select.selectedIndex = 1;
+                    }
+                }
+
+                updateAvailableQty(select);
+            }
+
+            searchInput.addEventListener('input', filterProducts);
 
             select.addEventListener('change', function() {
                 updateAvailableQty(select);
@@ -131,29 +189,33 @@
             rows.forEach(row => {
                 const removeBtn = row.querySelector('.remove-row-btn');
                 if (rows.length > 1) {
+                    removeBtn.classList.remove('hidden');
                     removeBtn.style.display = 'inline-flex';
                 } else {
+                    removeBtn.classList.add('hidden');
                     removeBtn.style.display = 'none';
                 }
             });
         }
 
-        // Bind first row
-        bindRowEvents(itemsContainer.querySelector('.sale-item-row'));
+        // Initialize first row
+        const firstRow = itemsContainer.querySelector('.sale-item-row');
+        setupProductSearchAndEvents(firstRow);
 
         addRowBtn.addEventListener('click', function() {
-            const firstRow = itemsContainer.querySelector('.sale-item-row');
             const newRow = firstRow.cloneNode(true);
 
             // Clear values
-            newRow.querySelector('.product-select').selectedIndex = 0;
+            newRow.querySelector('.product-search-input').value = '';
             newRow.querySelector('.available-display').value = '';
             newRow.querySelector('.qty-input').value = '';
+            newRow.querySelector('.no-match-msg').classList.add('hidden');
 
             itemsContainer.appendChild(newRow);
-            bindRowEvents(newRow);
+            setupProductSearchAndEvents(newRow);
             updateRemoveButtons();
         });
     });
 </script>
 {% endblock %}
+

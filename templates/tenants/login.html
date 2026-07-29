@@ -2,39 +2,83 @@
 
 {% block auth_content %}
 <div class="auth-container">
-    <div class="auth-card">
-        <div class="auth-header">
-            <h1>Workspace Sign In</h1>
-            <p>Access your isolated inventory environment</p>
-        </div>
-        <form method="POST" action="{{ url('tenants:login') }}">
-            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
-            {% if form.non_field_errors() %}
-                <div class="alert alert-error">
-                    <span>{{ form.non_field_errors()[0] }}</span>
+    <div class="auth-split-wrapper">
+        <!-- App Description Banner -->
+        <div class="auth-banner">
+            <div>
+                <div class="auth-banner-badge">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    SaaS Inventory Platform
                 </div>
-            {% endif %}
+                <h2 class="auth-banner-title">Smart Multi-Tenant Inventory & Sales Management</h2>
+                <p class="auth-banner-desc">
+                    Empower your business with real-time stock tracking, isolated multi-tenant workspaces, quick sale processing, and instant printable receipts.
+                </p>
 
-            {% for field in form %}
-                <div class="form-group">
-                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <div class="form-error">{{ field.errors[0] }}</div>
-                    {% endif %}
+                <div class="auth-banner-features">
+                    <div class="auth-feature-item">
+                        <div class="auth-feature-icon">✓</div>
+                        <div>
+                            <strong style="color: #fff;">Isolated Workspaces:</strong> Enterprise data security with dedicated multi-tenant isolation.
+                        </div>
+                    </div>
+                    <div class="auth-feature-item">
+                        <div class="auth-feature-icon">✓</div>
+                        <div>
+                            <strong style="color: #fff;">Fast POS & Transactions:</strong> Instant product lookup and live stock calculation.
+                        </div>
+                    </div>
+                    <div class="auth-feature-item">
+                        <div class="auth-feature-icon">✓</div>
+                        <div>
+                            <strong style="color: #fff;">Printable Invoices:</strong> Automated thermal and standard receipt generation.
+                        </div>
+                    </div>
                 </div>
-            {% endfor %}
-
-            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;" id="btn-login">
-                Sign In
-            </button>
-
-            <div style="text-align: center; margin-top: 24px; font-size: 14px;">
-                <span style="color: var(--text-secondary)">New business?</span>
-                <a href="{{ url('tenants:register') }}" style="color: var(--accent-primary); text-decoration: none; font-weight: 600; margin-left: 4px;">Create an Account</a>
             </div>
-        </form>
+
+            <div class="auth-banner-footer">
+                <span>© 2026 SaaS Inventory</span>
+                <span>Hassan Saidu</span>
+            </div>
+        </div>
+
+        <!-- Compact Auth Form (sm / md size) -->
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Workspace Sign In</h1>
+                <p>Access your isolated inventory environment</p>
+            </div>
+            <form method="POST" action="{{ url('tenants:login') }}">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+                {% if form.non_field_errors() %}
+                    <div class="alert alert-error">
+                        <span>{{ form.non_field_errors()[0] }}</span>
+                    </div>
+                {% endif %}
+
+                {% for field in form %}
+                    <div class="form-group">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="form-error">{{ field.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;" id="btn-login">
+                    Sign In
+                </button>
+
+                <div style="text-align: center; margin-top: 24px; font-size: 14px;">
+                    <span style="color: var(--text-secondary)">New business?</span>
+                    <a href="{{ url('tenants:register') }}" style="color: var(--accent-primary); text-decoration: none; font-weight: 600; margin-left: 4px;">Create an Account</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}
+
