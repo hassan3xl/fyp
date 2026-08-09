@@ -22,12 +22,12 @@
             <div class="sale-item-row grid grid-cols-[2.5fr_1fr_1fr_auto] gap-4 items-start mb-6 pb-4 border-b border-[var(--border-color)]">
                 <div class="form-group mb-0">
                     <label class="form-label">Product Search & Select</label>
-                    <input type="text" class="form-input product-search-input mb-2 text-sm" placeholder="🔍 Type to search product name..." style="padding: 8px 12px; margin-bottom: 8px;" />
+                    <input type="text" class="form-input product-search-input mb-2 text-sm" placeholder="🔍 Search product name or barcode..." style="padding: 8px 12px; margin-bottom: 8px;" />
                     <select name="product_ids" class="form-input product-select" required>
                         <option value="">Select a Product</option>
                         {% for product in products %}
                             <option value="{{ product.id }}" data-price="{{ product.unit_price }}" data-qty="{{ product.quantity }}">
-                                {{ product.name }} (₦{{ product.unit_price }}) - In Stock: {{ product.quantity }}
+                                {{ product.name }}{% if product.sku %} [{{ product.sku }}]{% endif %} (₦{{ product.unit_price }}) - In Stock: {{ product.quantity }}
                             </option>
                         {% endfor %}
                     </select>

@@ -21,7 +21,7 @@ class ProductForm(forms.ModelForm):
         widgets = {
             'category': forms.Select(attrs={'class': 'form-input'}),
             'name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Product Name'}),
-            'sku': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'SKU'}),
+            'sku': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g. 890123456789 or PRD-001'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-input'}),
             'unit_price': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
 
@@ -35,12 +35,16 @@ class ProductForm(forms.ModelForm):
             'reorder_level': forms.NumberInput(attrs={'class': 'form-input'}),
             'supplier_code': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Supplier Code'}),
         }
+        labels = {
+            'sku': 'Barcode / Product Code',
+        }
 
     def __init__(self, *args, **kwargs):
         business_type = kwargs.pop('business_type', 'pharmacy')
         super().__init__(*args, **kwargs)
         self.fields['category'].queryset = Category.objects.all()
         self.fields['category'].empty_label = "Select a Category"
+        self.fields['sku'].label = 'Barcode / Product Code'
 
         # Dynamically set required attributes
         if business_type == 'pharmacy':

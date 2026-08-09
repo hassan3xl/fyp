@@ -35,7 +35,6 @@ body {
     color: var(--text-primary);
     font-family: var(--font-family);
     min-height: 100vh;
-    display: flex;
     overflow-x: hidden;
     line-height: 1.5;
 }
@@ -433,11 +432,11 @@ body {
 
 .form-input {
     width: 100%;
-    background: var(--bg-primary);
+    background: #f8fafc;
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     padding: 12px 16px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     font-family: inherit;
     font-size: 14px;
     transition: var(--transition);
@@ -445,8 +444,9 @@ body {
 
 .form-input:focus {
     outline: none;
+    background: #ffffff;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.2);
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.15);
 }
 
 .form-error {

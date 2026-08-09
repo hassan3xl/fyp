@@ -17,7 +17,6 @@
             <thead>
                 <tr>
                     <th>Sale ID</th>
-                    <th>Recorded By</th>
                     <th>Total Amount</th>
                     <th>Date & Time</th>
                     <th style="text-align: right;">Actions</th>
@@ -27,7 +26,6 @@
                 {% for sale in sales %}
                     <tr>
                         <td style="font-family: monospace; font-size: 12px; color: var(--accent-blue);">{{ sale.id }}</td>
-                        <td>{{ sale.user.username }}</td>
                         <td class="font-semibold text-[var(--accent-green)] text-base">₦{{ sale.total_amount }}</td>
                         <td>{{ sale.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                         <td style="text-align: right;">

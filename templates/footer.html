@@ -1,0 +1,35 @@
+<footer class="app-footer w-full py-4 px-6 border-t border-slate-200/80 bg-white text-center text-md text-slate-500 mt-auto">
+  <p class="m-0">Developed by <a href="https://github.com/hassan3xl/fyb" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-800 hover:text-[#1b4332] underline underline-offset-2 transition-colors">Hassan Saidu</a>, CSC/22U/4159</p>
+</footer>
+
+<script>
+  // Active link highlighting with Tailwind CSS classes
+  (function() {
+    const currentPath = window.location.pathname;
+    let activeId = null;
+    if (currentPath.includes("/dashboard/")) {
+      activeId = "nav-dashboard";
+    } else if (currentPath.includes("/products/")) {
+      activeId = "nav-products";
+    } else if (currentPath.includes("/categories/")) {
+      activeId = "nav-categories";
+    } else if (currentPath.includes("/sales/new/")) {
+      activeId = "nav-new-sale";
+    } else if (currentPath.includes("/sales/")) {
+      activeId = "nav-sales";
+    }
+    
+    if (activeId) {
+      const el = document.getElementById(activeId);
+      if (el) {
+        el.classList.add("bg-emerald-50", "text-[#1b4332]", "font-semibold");
+        el.classList.remove("text-slate-600");
+        const icon = el.querySelector("i");
+        if (icon) {
+          icon.classList.remove("text-slate-400");
+          icon.classList.add("text-[#1b4332]");
+        }
+      }
+    }
+  })();
+</script>

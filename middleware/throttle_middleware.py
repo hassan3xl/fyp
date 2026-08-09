@@ -34,7 +34,9 @@ class ThrottleMiddleware:
             else:
                 identifier = f"ip:{request.META.get('REMOTE_ADDR')}"
 
-        limit = getattr(settings, 'THROTTLE_LIMIT', 10)
+        plan = getattr(request, 'plan', 'standard')
+        default_limit = 300 if str(plan).lower() == 'premium' else 100
+        limit = getattr(settings, 'THROTTLE_LIMIT', default_limit)
         window_size = 60
         cache_key = f'throttle:{identifier}'
 

@@ -1,0 +1,61 @@
+<aside class="w-64 bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0 z-50 shrink-0 select-none">
+  <!-- Brand Header -->
+  <div class="p-6 border-b border-slate-100">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-[#1b4332] text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+      </div>
+      <div class="min-w-0 flex-1">
+        <h2 class="text-sm font-bold text-slate-900 truncate leading-tight">
+          {{ tenant_name or 'Inventory SaaS' }}
+        </h2>
+        <span class="inline-block text-[10px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-1 border border-emerald-200/60">
+          {{ business_type or 'General' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Links -->
+  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+    <a href="{{ url('inventory:dashboard') }}" id="nav-dashboard" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+      <i class="fas fa-chart-pie w-4 text-slate-400 text-center text-sm"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <a href="{{ url('inventory:product_list') }}" id="nav-products" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+      <i class="fas fa-boxes-stacked w-4 text-slate-400 text-center text-sm"></i>
+      <span>Products</span>
+    </a>
+
+    <a href="{{ url('inventory:category_list') }}" id="nav-categories" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+      <i class="fas fa-tags w-4 text-slate-400 text-center text-sm"></i>
+      <span>Categories</span>
+    </a>
+
+    <a href="{{ url('inventory:sale_list') }}" id="nav-sales" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+      <i class="fas fa-receipt w-4 text-slate-400 text-center text-sm"></i>
+      <span>Sales History</span>
+    </a>
+
+    <div class="pt-2">
+      <a href="{{ url('inventory:sale_new') }}" id="nav-new-sale" class="sidebar-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-[#1b4332] bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200/50 transition-colors">
+        <i class="fas fa-cash-register w-4 text-[#1b4332] text-center text-sm"></i>
+        <span>+ New Sale POS</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Sidebar Footer / Logout -->
+  <div class="p-4 border-t border-slate-100 bg-slate-50/50">
+    <form action="{{ url('tenants:logout') }}" method="POST" class="w-full">
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+      <button type="submit" id="btn-logout" class="w-full py-2.5 px-3.5 rounded-xl border border-rose-200/80 bg-white text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-semibold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+        <i class="fas fa-arrow-right-from-bracket text-xs"></i>
+        <span>Sign Out</span>
+      </button>
+    </form>
+  </div>
+</aside>
