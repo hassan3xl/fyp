@@ -58,4 +58,10 @@ class ThrottleMiddlewareTests(TestCase):
         response = self.middleware(request)
         self.assertEqual(response.status_code, 429)
 
+    def test_ping_endpoint(self):
+        response = self.client.get('/ping/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], "healthy")
+
+
 

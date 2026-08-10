@@ -12,7 +12,7 @@ class TenantIsolationMiddleware:
     def __call__(self, request):
         clear_current_tenant()
 
-        exempt_paths = ['/register/', '/logout/', '/admin/', '/static/', '/onboarding/']
+        exempt_paths = ['/register/', '/logout/', '/admin/', '/static/', '/onboarding/', '/ping/']
         is_exempt = any(request.path.startswith(path) for path in exempt_paths) or request.path == '/'
 
         try:

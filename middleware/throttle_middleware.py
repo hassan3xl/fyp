@@ -10,7 +10,7 @@ class ThrottleMiddleware:
 
     def __call__(self, request):
         # Exempt certain paths from throttling
-        exempt_paths = ['/register/', '/logout/', '/admin/', '/static/', '/onboarding/']
+        exempt_paths = ['/register/', '/logout/', '/admin/', '/static/', '/onboarding/', '/ping/']
         is_exempt = any(request.path.startswith(path) for path in exempt_paths) or request.path == '/'
 
         if is_exempt:
