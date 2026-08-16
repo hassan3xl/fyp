@@ -15,7 +15,7 @@
     <div id="user-profile-dropdown" style="display: none; position: absolute; right: 0; top: 48px; width: 260px; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 1000; padding: 16px;">
       <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
         <div style="font-weight: 700; font-size: 15px; color: var(--text-primary);">
-          {% if request.user.profile.first_name or request.user.profile.last_name %} {{ request.user.profile.first_name }} {{ request.user.profile.last_name }} {% else %} {{ request.user.email.split('@')[0]|title }} {% endif %}
+          {% if request.user.first_name or request.user.last_name %} {{ request.user.first_name }} {{ request.user.last_name }} {% else %} {{ request.user.email.split('@')[0]|title }} {% endif %}
         </div>
         <div style="font-size: 12px; color: var(--text-secondary); word-break: break-all; margin-top: 2px;">
           {{ request.user.email }}

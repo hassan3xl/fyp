@@ -36,7 +36,7 @@ class ProductForm(forms.ModelForm):
             'supplier_code': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Supplier Code'}),
         }
         labels = {
-            'sku': 'Barcode / Product Code',
+            'sku': 'Product Code / SKU',
         }
 
     def __init__(self, *args, **kwargs):
@@ -44,7 +44,7 @@ class ProductForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['category'].queryset = Category.objects.all()
         self.fields['category'].empty_label = "Select a Category"
-        self.fields['sku'].label = 'Barcode / Product Code'
+        self.fields['sku'].label = 'Product Code / SKU'
 
         # Dynamically set required attributes
         if business_type == 'pharmacy':

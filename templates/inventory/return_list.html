@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Returns & Exchanges | {{ tenant_name }}{% endblock %}
+{% block page_header %}Returns & Exchanges Registry{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Top Action Bar & Quick Receipt Lookup -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-slate-900">Return & Exchange Transactions</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Audit log of customer returns, stock restorations, and product exchanges</p>
+        </div>
+
+        <!-- Quick Receipt Lookup Box -->
+        <form action="{{ url('inventory:sale_lookup') }}" method="GET" class="flex items-center gap-2 max-w-md w-full md:w-auto">
+            <input type="hidden" name="action" value="return">
+            <div class="relative flex-1">
+                <input
+                    type="text"
+                    name="q"
+                    placeholder="Scan receipt / enter Sale ID..."
+                    class="form-input text-xs py-2.5 pl-9 pr-3 w-full border-slate-300 rounded-xl font-mono"
+                    required
+                />
+                <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+            </div>
+            <button type="submit" class="btn btn-primary text-xs py-2.5 px-4 font-semibold shrink-0" id="btn-lookup-return">
+                <i class="fas fa-arrow-rotate-left"></i> Find & Return
+            </button>
+        </form>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <form method="GET" class="flex flex-wrap items-center gap-3 flex-1">
+            <div class="relative min-w-[240px] flex-1">
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ query or '' }}"
+                    placeholder="Search by Return ID, Sale ID, or product name..."
+                    class="form-input text-xs py-2 pl-9 pr-3 w-full"
+                />
+                <i class="fas fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            </div>
+
+            <select name="type" class="form-input text-xs py-2 px-3 w-auto" onchange="this.form.submit()">
+                <option value="all" {% if return_type_filter == 'all' or not return_type_filter %}selected{% endif %}>All Return Types</option>
+                <option value="refund" {% if return_type_filter == 'refund' %}selected{% endif %}>Refund Only</option>
+                <option value="exchange" {% if return_type_filter == 'exchange' %}selected{% endif %}>Product Exchange / Swap</option>
+                <option value="store_credit" {% if return_type_filter == 'store_credit' %}selected{% endif %}>Store Credit</option>
+            </select>
+
+            <button type="submit" class="btn btn-secondary text-xs py-2 px-3">
+                Filter
+            </button>
+            {% if query or (return_type_filter and return_type_filter != 'all') %}
+                <a href="{{ url('inventory:return_list') }}" class="text-xs text-slate-500 hover:text-slate-800 underline">
+                    Clear Filters
+                </a>
+            {% endif %}
+        </form>
+
+        <a href="{{ url('inventory:sale_list') }}" class="btn btn-secondary text-xs py-2 px-3.5 inline-flex items-center gap-2">
+            <i class="fas fa-receipt"></i> Browse Sales History
+        </a>
+    </div>
+
+    <!-- Returns Table -->
+    {% if returns %}
+        <div class="table-container bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <table class="table w-full text-left">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                        <th>Return ID</th>
+                        <th>Original Sale ID</th>
+                        <th>Type & Reason</th>
+                        <th>Returned Items</th>
+                        <th>Settlement Balance</th>
+                        <th>Date & Staff</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for ret in returns %}
+                        <tr class="hover:bg-slate-50/60 transition-colors">
+                            <td class="font-mono text-xs text-blue-700 font-bold">
+                                #{{ ret.id }}
+                            </td>
+                            <td>
+                                <a href="{{ url('inventory:sale_detail', kwargs={'pk': ret.sale.id}) }}" class="font-mono text-xs text-slate-700 hover:text-blue-600 font-semibold underline">
+                                    #{{ ret.sale.id }}
+                                </a>
+                            </td>
+                            <td>
+                                <div>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold
+                                        {% if ret.return_type == 'exchange' %}bg-blue-50 text-blue-700 border border-blue-200
+                                        {% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
+                                        {{ ret.get_return_type_display() }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-slate-500 mt-1">{{ ret.get_reason_display() }}</div>
+                            </td>
+                            <td>
+                                <div class="space-y-0.5">
+                                    {% for r_item in ret.returned_items.all() %}
+                                        <div class="text-xs text-slate-800 font-medium">
+                                            {{ r_item.product.name }} &times; {{ r_item.quantity }}
+                                            {% if r_item.restocked %}
+                                                <span class="text-[10px] text-emerald-600 font-semibold">(Restocked)</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                    {% if ret.exchange_items.all() %}
+                                        <div class="text-[11px] text-blue-600 font-semibold mt-1">
+                                            Swapped for:
+                                            {% for e_item in ret.exchange_items.all() %}
+                                                {{ e_item.product.name }} &times; {{ e_item.quantity }}{% if not loop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if ret.refund_amount > 0 %}
+                                    <div class="font-bold text-emerald-700 text-sm">
+                                        Refund: ₦{{ ret.refund_amount }}
+                                    </div>
+                                {% elif ret.additional_amount > 0 %}
+                                    <div class="font-bold text-blue-700 text-sm">
+                                        Paid: +₦{{ ret.additional_amount }}
+                                    </div>
+                                {% else %}
+                                    <div class="font-semibold text-slate-600 text-sm">
+                                        Even Exchange
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="text-xs text-slate-600">
+                                <div>{{ ret.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                <div class="text-slate-400 mt-0.5">By: {{ ret.user.username }}</div>
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{{ url('inventory:return_detail', kwargs={'pk': ret.id}) }}" class="btn btn-secondary text-xs py-1.5 px-3" id="btn-view-return-{{ ret.id }}">
+                                    View Receipt
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card text-center py-16 px-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <div class="w-12 h-12 bg-emerald-50 text-[#1b4332] rounded-full flex items-center justify-center mx-auto mb-3 text-lg">
+                <i class="fas fa-arrow-rotate-left"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">No returns or exchanges recorded</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-5">
+                When customers bring back items for return or product swap, search the original sale invoice to initiate the return workflow.
+            </p>
+            <a href="{{ url('inventory:sale_list') }}" class="btn btn-primary text-xs py-2 px-4 inline-flex items-center gap-2">
+                <i class="fas fa-search"></i> Find a Sale in Sales History
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

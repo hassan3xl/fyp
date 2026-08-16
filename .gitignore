@@ -28,6 +28,7 @@ local_settings.py
 db.sqlite3
 media/
 staticfiles/
+.django_cache/
 
 # Environments
 .env

@@ -143,7 +143,7 @@ def onboarding_view(request):
         {
             'value': 'supermarket',
             'label': 'Supermarket / Grocery Store',
-            'desc': 'Manage high-volume retail transactions, barcode scanning, categories, and multiple cashiers.',
+            'desc': 'Manage high-volume retail transactions, product categories, and multiple cashiers.',
             'icon': 'fa-store'
         },
         {

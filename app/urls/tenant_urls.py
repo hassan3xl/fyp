@@ -11,6 +11,10 @@ from app.views import (
     sale_list,
     sale_new,
     sale_detail,
+    sale_lookup,
+    sale_return_new,
+    return_list,
+    return_detail,
 )
 
 app_name = 'inventory'
@@ -26,5 +30,10 @@ urlpatterns = [
     path('categories/<uuid:pk>/delete/', category_delete, name='category_delete'),
     path('sales/', sale_list, name='sale_list'),
     path('sales/new/', sale_new, name='sale_new'),
+    path('sales/lookup/', sale_lookup, name='sale_lookup'),
     path('sales/<uuid:pk>/', sale_detail, name='sale_detail'),
+    path('sales/<uuid:pk>/return/', sale_return_new, name='sale_return_new'),
+    path('returns/', return_list, name='return_list'),
+    path('returns/<uuid:pk>/', return_detail, name='return_detail'),
 ]
+

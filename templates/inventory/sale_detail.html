@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Sale Details | {{ tenant_name }}{% endblock %}
+{% block title %}Sale Invoice #{{ sale.id }} | {{ tenant_name }}{% endblock %}
 {% block page_header %}Invoice Details{% endblock %}
 
 {% block extra_css %}
@@ -29,75 +29,98 @@
         padding: 20px !important;
         margin: 0 auto !important;
     }
-    .receipt-header-print {
-        text-align: center;
-        border-bottom: 2px dashed #000;
-        padding-bottom: 12px;
-        margin-bottom: 16px;
-    }
-    .receipt-footer-print {
-        text-align: center;
-        border-top: 2px dashed #000;
-        padding-top: 12px;
-        margin-top: 20px;
-    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="no-print" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
-    <a href="{{ url('inventory:sale_list') }}" class="btn btn-secondary" style="padding: 8px 16px;">
+<div class="no-print max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center gap-4">
+    <a href="{{ url('inventory:sale_list') }}" class="btn btn-secondary text-xs py-2 px-3 inline-flex items-center gap-2">
         &larr; Back to Sales History
     </a>
-    <button type="button" onclick="window.print()" class="btn btn-primary" id="btn-print-receipt" style="display: inline-flex; align-items: center; gap: 8px;">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
-            <path d="M6 14h12v8H6z"/>
-        </svg>
-        Print Receipt
-    </button>
+    <div class="flex items-center gap-2">
+        {% if sale.can_return %}
+            <a href="{{ url('inventory:sale_return_new', kwargs={'pk': sale.id}) }}" class="btn btn-primary text-xs py-2 px-3.5 inline-flex items-center gap-2 bg-[#1b4332] hover:bg-[#143326]" id="btn-process-return">
+                <i class="fas fa-arrow-rotate-left"></i> Process Return / Exchange
+            </a>
+        {% else %}
+            <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                <i class="fas fa-check-double mr-1.5"></i> Fully Returned
+            </span>
+        {% endif %}
+        <button type="button" onclick="window.print()" class="btn btn-secondary text-xs py-2 px-3.5 inline-flex items-center gap-2" id="btn-print-receipt">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                <path d="M6 14h12v8H6z"/>
+            </svg>
+            Print Receipt
+        </button>
+    </div>
 </div>
 
-<div class="card" id="printable-receipt-card" style="max-width: 800px; margin: 0 auto; background: var(--bg-secondary); border-color: var(--border-color);">
+<div class="card max-w-4xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-8" id="printable-receipt-card">
     <!-- Receipt / Invoice Header -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed var(--border-color); padding-bottom: 24px; margin-bottom: 24px;">
+    <div class="flex flex-wrap justify-between items-start border-b border-dashed border-slate-300 pb-6 mb-6 gap-4">
         <div>
-            <div class="sidebar-brand-name" style="font-size: 22px; font-weight: 800; color: var(--text-primary);">
+            <div class="text-2xl font-extrabold text-slate-900">
                 {{ tenant_name or 'Inventory SaaS' }}
             </div>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+            <div class="text-xs text-slate-500 mt-1">
                 Official Sales Receipt &bull; Transaction Invoice
             </div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px; font-family: monospace;">
+            <div class="text-xs text-slate-400 font-mono mt-2">
                 Receipt ID: #{{ sale.id }}
             </div>
         </div>
-        <div style="text-align: right;">
-            <div style="font-size: 13px; color: var(--text-secondary);">Date & Time:</div>
-            <div style="font-weight: 600; color: var(--text-primary); margin-top: 2px;">{{ sale.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Served By: {{ sale.user.username }}</div>
+        <div class="text-right">
+            <div class="text-xs text-slate-500">Date & Time:</div>
+            <div class="font-bold text-slate-900 mt-0.5">{{ sale.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+            <div class="text-xs text-slate-500 mt-2">Served By: <span class="font-semibold text-slate-800">{{ sale.user.username }}</span></div>
+            <div class="mt-2">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold
+                    {% if sale.status == 'completed' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                    {% elif sale.status == 'exchanged' %}bg-amber-100 text-amber-800 border border-amber-200
+                    {% elif sale.status == 'returned' %}bg-rose-100 text-rose-800 border border-rose-200
+                    {% else %}bg-purple-100 text-purple-800 border border-purple-200{% endif %}">
+                    {{ sale.status_display }}
+                </span>
+            </div>
         </div>
     </div>
 
     <!-- Items Table -->
-    <div class="table-container" style="border: none; margin-bottom: 24px;">
-        <table class="table">
+    <div class="table-container mb-6 border border-slate-200 rounded-xl overflow-hidden shadow-none">
+        <table class="table w-full text-left">
             <thead>
-                <tr style="background: none; border-bottom: 2px solid var(--border-color);">
-                    <th style="padding-left: 0;">Product Description</th>
-                    <th>Unit Price</th>
-                    <th>Qty</th>
-                    <th style="text-align: right; padding-right: 0;">Line Total</th>
+                <tr class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                    <th class="py-2.5 px-4">Product Description</th>
+                    <th class="py-2.5 px-3">Unit Price</th>
+                    <th class="py-2.5 px-3 text-center">Purchased</th>
+                    <th class="py-2.5 px-3 text-center">Returned</th>
+                    <th class="py-2.5 px-3 text-center">Active Qty</th>
+                    <th class="py-2.5 px-4 text-right">Line Total</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-100 text-sm">
                 {% for item in items %}
                     <tr>
-                        <td style="padding-left: 0; font-weight: 600;">{{ item.product.name }}</td>
-                        <td>₦{{ item.unit_price }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td style="text-align: right; padding-right: 0; font-weight: 700; color: var(--text-primary);">₦{{ item.unit_price * item.quantity }}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-900">
+                            {{ item.product.name }}
+                            {% if item.product.sku %}
+                                <span class="text-[11px] font-normal text-slate-400 font-mono block">{{ item.product.sku }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-3">₦{{ item.unit_price }}</td>
+                        <td class="py-3 px-3 text-center font-medium">{{ item.quantity }}</td>
+                        <td class="py-3 px-3 text-center font-medium {% if item.returned_quantity > 0 %}text-amber-600 font-bold{% else %}text-slate-400{% endif %}">
+                            {{ item.returned_quantity }}
+                        </td>
+                        <td class="py-3 px-3 text-center font-bold text-slate-800">
+                            {{ item.remaining_quantity }}
+                        </td>
+                        <td class="py-3 px-4 text-right font-extrabold text-slate-900">
+                            ₦{{ item.line_total }}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -105,38 +128,97 @@
     </div>
 
     <!-- Summary & Totals -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px dashed var(--border-color); pt-6; padding-top: 20px;">
-        <div style="font-size: 12px; color: var(--text-muted);">
-            <p style="margin-bottom: 4px;">Status: <span style="color: var(--accent-green); font-weight: 700; text-transform: uppercase;">PAID</span></p>
-            <p>Payment Method: Cash / Instant Settlement</p>
-        </div>
-        <div style="text-align: right; min-width: 240px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: var(--text-secondary);">Subtotal:</span>
-                <span style="color: var(--text-primary); font-weight: 600;">₦{{ sale.total_amount }}</span>
+    <div class="border-t-2 border-dashed border-slate-300 pt-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
+            <div class="text-xs text-slate-500 space-y-1">
+                <p>Status: <span class="font-bold text-emerald-700 uppercase">PAID &bull; SETTLED</span></p>
+                <p>Payment Method: Cash / Instant POS Settlement</p>
+                {% if sale.has_returns %}
+                    <p class="text-amber-700 font-semibold mt-1">
+                        <i class="fas fa-info-circle"></i> This transaction has return/exchange adjustments.
+                    </p>
+                {% endif %}
             </div>
-            <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 8px;">
-                <span style="color: var(--text-primary); font-weight: 800; font-size: 16px;">Total Amount:</span>
-                <span style="color: var(--accent-green); font-weight: 800; font-size: 22px;">₦{{ sale.total_amount }}</span>
+
+            <div class="w-full sm:w-80 space-y-2 text-sm bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div class="flex justify-between text-slate-600">
+                    <span>Original Invoice Subtotal:</span>
+                    <span class="font-bold text-slate-800">₦{{ sale.total_amount }}</span>
+                </div>
+
+                {% if sale.total_refund_amount > 0 %}
+                    <div class="flex justify-between text-rose-600">
+                        <span>Total Refunded:</span>
+                        <span class="font-bold">-₦{{ sale.total_refund_amount }}</span>
+                    </div>
+                {% endif %}
+
+                {% if sale.total_additional_collected > 0 %}
+                    <div class="flex justify-between text-blue-600">
+                        <span>Additional Exchange Collected:</span>
+                        <span class="font-bold">+₦{{ sale.total_additional_collected }}</span>
+                    </div>
+                {% endif %}
+
+                <div class="border-t border-slate-200 pt-2 mt-2 flex justify-between items-center">
+                    <span class="font-bold text-slate-900 text-base">Net Invoice Value:</span>
+                    <span class="font-extrabold text-2xl text-[#1b4332]">₦{{ sale.net_total }}</span>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Returns & Exchanges Audit Section -->
+    {% if returns %}
+        <div class="mt-8 pt-6 border-t border-slate-200 no-print">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-slate-800 mb-3 flex items-center gap-2">
+                <i class="fas fa-history text-emerald-700"></i> Return & Exchange History ({{ returns|length }})
+            </h4>
+            <div class="space-y-3">
+                {% for ret in returns %}
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-900">{{ ret.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                <span class="px-2 py-0.5 rounded-full font-bold text-[10px]
+                                    {% if ret.return_type == 'exchange' %}bg-blue-100 text-blue-800{% else %}bg-emerald-100 text-emerald-800{% endif %}">
+                                    {{ ret.get_return_type_display() }}
+                                </span>
+                                <span class="text-slate-500 font-mono">#{{ ret.id }}</span>
+                            </div>
+                            <div class="text-slate-600">
+                                <span class="font-medium text-slate-700">Reason:</span> {{ ret.get_reason_display() }}
+                                {% if ret.reason_details %}&bull; <span class="italic text-slate-500">{{ ret.reason_details }}</span>{% endif %}
+                            </div>
+                            <div class="text-slate-500">
+                                Processed by: <span class="font-semibold text-slate-700">{{ ret.user.username }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4 shrink-0">
+                            <div class="text-right">
+                                {% if ret.refund_amount > 0 %}
+                                    <div class="font-bold text-rose-700 text-sm">Refunded: ₦{{ ret.refund_amount }}</div>
+                                {% elif ret.additional_amount > 0 %}
+                                    <div class="font-bold text-blue-700 text-sm">Paid: +₦{{ ret.additional_amount }}</div>
+                                {% else %}
+                                    <div class="font-semibold text-slate-700 text-sm">Even Exchange</div>
+                                {% endif %}
+                            </div>
+                            <a href="{{ url('inventory:return_detail', kwargs={'pk': ret.id}) }}" class="btn btn-secondary text-xs py-1.5 px-3">
+                                View Receipt
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
 
     <!-- Printable Receipt Footer -->
-    <div style="text-align: center; margin-top: 32px; padding-top: 16px; border-top: 1px dashed var(--border-color); color: var(--text-secondary); font-size: 13px;">
-        <p style="font-weight: 600; margin-bottom: 4px;">Thank you for your business!</p>
-        <p style="font-size: 11px; color: var(--text-muted);">Please keep this receipt for your records.</p>
-    </div>
-
-    <!-- Additional Print Action Button inside card (hidden when printing) -->
-    <div class="no-print" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
-        <button type="button" onclick="window.print()" class="btn btn-primary">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
-                <path d="M6 14h12v8H6z"/>
-            </svg>
-            Print Receipt
-        </button>
+    <div class="text-center mt-8 pt-6 border-t border-dashed border-slate-200 text-slate-500 text-xs">
+        <p class="font-bold text-slate-700 mb-1">Thank you for your business!</p>
+        <p>Please keep this receipt for your records and returns.</p>
     </div>
 </div>
 {% endblock %}

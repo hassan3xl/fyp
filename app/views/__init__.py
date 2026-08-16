@@ -12,6 +12,12 @@ from .product_views import (
     sale_new,
     sale_detail,
 )
+from .return_views import (
+    return_list,
+    return_detail,
+    sale_return_new,
+    sale_lookup,
+)
 
 __all__ = [
     'login_view',
@@ -28,4 +34,9 @@ __all__ = [
     'sale_list',
     'sale_new',
     'sale_detail',
+    'return_list',
+    'return_detail',
+    'sale_return_new',
+    'sale_lookup',
 ]
+

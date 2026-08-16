@@ -1,48 +1,172 @@
 {% extends "base.html" %}
 
 {% block title %}Sales History | {{ tenant_name }}{% endblock %}
-{% block page_header %}Sales Registry{% endblock %}
+{% block page_header %}Sales History & Transactions{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h2 style="font-size: 20px; font-weight: 700; color: var(--text-primary);">All Recorded Sales</h2>
-    <a href="{{ url('inventory:sale_new') }}" class="btn btn-primary" id="btn-new-sale">
-        + Record New Sale
-    </a>
-</div>
+<div class="space-y-6">
+    <!-- Top Actions & Quick Receipt Lookup -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-slate-900">Sales Transactions</h2>
+            <p class="text-xs text-slate-500 mt-0.5">View and manage customer invoices, purchase history, and product returns</p>
+        </div>
 
-{% if sales %}
-    <div class="table-container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Sale ID</th>
-                    <th>Total Amount</th>
-                    <th>Date & Time</th>
-                    <th style="text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for sale in sales %}
-                    <tr>
-                        <td style="font-family: monospace; font-size: 12px; color: var(--accent-blue);">{{ sale.id }}</td>
-                        <td class="font-semibold text-[var(--accent-green)] text-base">₦{{ sale.total_amount }}</td>
-                        <td>{{ sale.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                        <td style="text-align: right;">
-                            <a href="{{ url('inventory:sale_detail', kwargs={'pk': sale.id}) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" id="btn-view-sale-{{ sale.id }}">
-                                View Details
-                            </a>
-                        </td>
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- Quick Receipt Lookup Form -->
+            <form action="{{ url('inventory:sale_lookup') }}" method="GET" class="flex items-center gap-2">
+                <div class="relative">
+                    <input
+                        type="text"
+                        name="q"
+                        placeholder="Enter Receipt / Sale ID..."
+                        class="form-input text-xs py-2 pl-8 pr-3 w-56 font-mono border-slate-300 rounded-xl"
+                        required
+                    />
+                    <i class="fas fa-hashtag absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                </div>
+                <button type="submit" class="btn btn-secondary text-xs py-2 px-3 inline-flex items-center gap-1.5" id="btn-quick-lookup">
+                    <i class="fas fa-search text-[10px]"></i> Lookup
+                </button>
+            </form>
+
+            <a href="{{ url('inventory:sale_new') }}" class="btn btn-primary text-xs py-2 px-3.5 inline-flex items-center gap-1.5" id="btn-new-sale">
+                <i class="fas fa-plus"></i> Record Sale
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+        <form method="GET" class="flex flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-[240px]">
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ query or '' }}"
+                    placeholder="Search by Sale ID or product name..."
+                    class="form-input text-xs py-2 pl-9 pr-3 w-full"
+                />
+                <i class="fas fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            </div>
+
+            <select name="status" class="form-input text-xs py-2 px-3 w-auto" onchange="this.form.submit()">
+                <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>All Statuses</option>
+                <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed (No Returns)</option>
+                <option value="partially_returned" {% if status_filter == 'partially_returned' %}selected{% endif %}>Partially Returned</option>
+                <option value="exchanged" {% if status_filter == 'exchanged' %}selected{% endif %}>Exchanged</option>
+                <option value="returned" {% if status_filter == 'returned' %}selected{% endif %}>Fully Returned</option>
+            </select>
+
+            <button type="submit" class="btn btn-secondary text-xs py-2 px-3">
+                Filter
+            </button>
+            {% if query or (status_filter and status_filter != 'all') %}
+                <a href="{{ url('inventory:sale_list') }}" class="text-xs text-slate-500 hover:text-slate-800 underline">
+                    Clear
+                </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Sales Table -->
+    {% if sales %}
+        <div class="table-container bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <table class="table w-full text-left">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                        <th>Receipt ID</th>
+                        <th>Products Purchased</th>
+                        <th>Invoice Total</th>
+                        <th>Status</th>
+                        <th>Date & Staff</th>
+                        <th style="text-align: right;">Actions</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-{% else %}
-    <div class="card" style="text-align: center; padding: 60px; color: var(--text-secondary);">
-        <h3>No sales recorded</h3>
-        <p style="margin: 8px 0 20px;">Generate invoice items by recording your first sale transaction.</p>
-        <a href="{{ url('inventory:sale_new') }}" class="btn btn-primary">Record New Sale</a>
-    </div>
-{% endif %}
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for sale in sales %}
+                        <tr class="hover:bg-slate-50/60 transition-colors">
+                            <td>
+                                <a href="{{ url('inventory:sale_detail', kwargs={'pk': sale.id}) }}" class="font-mono text-xs text-blue-700 font-bold hover:underline">
+                                    #{{ sale.id }}
+                                </a>
+                            </td>
+                            <td>
+                                <div class="space-y-0.5 max-w-xs">
+                                    {% for item in sale.items.all() %}
+                                        <div class="text-xs text-slate-800 font-medium truncate">
+                                            {{ item.product.name }} &times; {{ item.quantity }}
+                                            {% if item.returned_quantity > 0 %}
+                                                <span class="text-[10px] text-amber-600 font-semibold">({{ item.returned_quantity }} ret.)</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <span class="font-bold text-slate-900 text-sm">₦{{ sale.total_amount }}</span>
+                                </div>
+                                {% if sale.has_returns %}
+                                    <div class="text-[11px] text-slate-500">
+                                        Net: <span class="font-bold text-[#1b4332]">₦{{ sale.net_total }}</span>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                    {% if sale.status == 'completed' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+                                    {% elif sale.status == 'exchanged' %}bg-amber-50 text-amber-800 border border-amber-200
+                                    {% elif sale.status == 'returned' %}bg-rose-50 text-rose-800 border border-rose-200
+                                    {% else %}bg-purple-50 text-purple-800 border border-purple-200{% endif %}">
+                                    {{ sale.status_display }}
+                                </span>
+                            </td>
+                            <td class="text-xs text-slate-600">
+                                <div>{{ sale.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                <div class="text-slate-400 mt-0.5">By: {{ sale.user.username }}</div>
+                            </td>
+                            <td style="text-align: right;">
+                                <div class="inline-flex items-center gap-1.5">
+                                    {% if sale.can_return %}
+                                        <a href="{{ url('inventory:sale_return_new', kwargs={'pk': sale.id}) }}" class="btn btn-secondary text-xs py-1.5 px-2.5 text-emerald-800 hover:bg-emerald-50 border-emerald-300" title="Return or exchange items" id="btn-return-sale-{{ sale.id }}">
+                                            <i class="fas fa-arrow-rotate-left mr-1"></i> Return
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ url('inventory:sale_detail', kwargs={'pk': sale.id}) }}" class="btn btn-secondary text-xs py-1.5 px-2.5" id="btn-view-sale-{{ sale.id }}">
+                                        View
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card text-center py-16 px-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3 text-lg">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">No sales transactions found</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-5">
+                {% if query or status_filter %}
+                    No sales matches your current search or filter criteria.
+                {% else %}
+                    Generate invoice items by recording your first sale transaction.
+                {% endif %}
+            </p>
+            {% if query or status_filter %}
+                <a href="{{ url('inventory:sale_list') }}" class="btn btn-secondary text-xs py-2 px-4">
+                    Clear Filters
+                </a>
+            {% else %}
+                <a href="{{ url('inventory:sale_new') }}" class="btn btn-primary text-xs py-2 px-4">
+                    Record New Sale
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
+
