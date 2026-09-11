@@ -4,47 +4,52 @@
 {% block page_header %}Product Inventory{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h2 style="font-size: 20px; font-weight: 700; color: var(--text-primary);">All Products</h2>
-    <a href="{{ url('inventory:product_add') }}" class="btn btn-primary" id="btn-add-product">
-        + Add Product
-    </a>
-</div>
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-slate-900">All Products</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Manage your catalog, stock levels, pricing, and batch details</p>
+        </div>
+        <a href="{{ url('inventory:product_add') }}" class="btn btn-primary text-xs py-2.5 px-4 font-semibold inline-flex items-center gap-2 self-start sm:self-auto bg-[#1b4332] hover:bg-[#143326]" id="btn-add-product">
+            <i class="fas fa-plus"></i> Add Product
+        </a>
+    </div>
 
-{% if products %}
-    <div class="table-container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Product Code / SKU</th>
-                    <th>Quantity</th>
-                    <th>Unit Price</th>
-                    {% if business_type == 'pharmacy' %}
-                        <th>Batch #</th>
-                        <th>Manufacturer</th>
-                        <th>Expiry Date</th>
-                        <th>NAFDAC #</th>
-                    {% elif business_type == 'provision_store' %}
-                        <th>Reorder Level</th>
-                        <th>Supplier Code</th>
-                    {% endif %}
-                    <th style="text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for product in products %}
-                    <tr>
-                        <td style="font-weight: 600; color: var(--text-primary);">{{ product.name }}</td>
-                        <td>
-                            {% if product.category %}
-                                <span class="card-badge badge-primary" style="margin-top:0;">{{ product.category.name }}</span>
-                            {% else %}
-                                <span style="color: var(--text-muted);">Uncategorized</span>
+    {% if products %}
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50/70 border-b border-slate-200 text-slate-600 uppercase font-bold tracking-wider">
+                            <th class="py-3 px-4">Name</th>
+                            <th class="py-3 px-4">Category</th>
+                            <th class="py-3 px-4">Product Code / SKU</th>
+                            <th class="py-3 px-4">Quantity</th>
+                            <th class="py-3 px-4">Unit Price</th>
+                            {% if business_type == 'pharmacy' %}
+                                <th class="py-3 px-4">Batch #</th>
+                                <th class="py-3 px-4">Manufacturer</th>
+                                <th class="py-3 px-4">Expiry Date</th>
+                                <th class="py-3 px-4">NAFDAC #</th>
+                            {% elif business_type == 'provision_store' %}
+                                <th class="py-3 px-4">Reorder Level</th>
+                                <th class="py-3 px-4">Supplier Code</th>
                             {% endif %}
-                        </td>
-                        <td>{{ product.sku or '-' }}</td>
+                            <th class="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        {% for product in products %}
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td class="py-3.5 px-4 font-bold text-slate-900">{{ product.name }}</td>
+                                <td class="py-3.5 px-4">
+                                    {% if product.category %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/60">{{ product.category.name }}</span>
+                                    {% else %}
+                                        <span class="text-slate-400 italic">Uncategorized</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3.5 px-4 font-mono text-slate-600">{{ product.sku or '-' }}</td>
                         <td>
                             {% if business_type == 'pharmacy' and product.quantity <= 5 %}
                                 <span style="color: var(--accent-red); font-weight: 600;">{{ product.quantity }} (Low)</span>

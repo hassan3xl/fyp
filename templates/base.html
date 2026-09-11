@@ -49,7 +49,7 @@
         <!-- Main Wrapper -->
         <div class="main-wrapper flex-1 flex flex-col min-h-screen min-w-0">
           {% include 'navbar.html' %}
-          <main class="content-container flex-1">
+          <main class="flex-1 p-6 lg:p-8 overflow-y-auto">
             {% include 'home.html' %}
             {% block content %}{% endblock content %}
           </main>

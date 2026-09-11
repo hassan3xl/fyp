@@ -39,16 +39,7 @@
     <!-- Search & Filter Controls -->
     <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
         <form method="GET" class="flex flex-wrap items-center gap-3">
-            <div class="relative flex-1 min-w-[240px]">
-                <input
-                    type="text"
-                    name="q"
-                    value="{{ query or '' }}"
-                    placeholder="Search by Sale ID or product name..."
-                    class="form-input text-xs py-2 pl-9 pr-3 w-full"
-                />
-                <i class="fas fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            </div>
+     
 
             <select name="status" class="form-input text-xs py-2 px-3 w-auto" onchange="this.form.submit()">
                 <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>All Statuses</option>
