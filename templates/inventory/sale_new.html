@@ -4,218 +4,518 @@
 {% block page_header %}Record New Sale{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 850px; margin: 0 auto;">
-    <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">
-        Record New Transaction
-    </h2>
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header Row -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-slate-900">Record New Sale</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Point of sale checkout and inventory deduction</p>
+        </div>
+        <div>
+            <a href="{{ url('inventory:sale_list') }}" class="btn btn-secondary text-xs py-2 px-3 inline-flex items-center gap-1.5">
+                <i class="fas fa-arrow-left text-[10px]"></i> Sales History
+            </a>
+        </div>
+    </div>
 
     {% if error %}
-        <div class="alert alert-error">
+        <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-start gap-2.5">
+            <i class="fas fa-circle-exclamation text-rose-500 mt-0.5 shrink-0"></i>
             <span>{{ error }}</span>
         </div>
     {% endif %}
 
-    <form method="POST" id="sale-form">
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
-        <div id="items-container">
-            <div class="sale-item-row grid grid-cols-[2.5fr_1fr_1fr_auto] gap-4 items-start mb-6 pb-4 border-b border-[var(--border-color)]">
-                <div class="form-group mb-0">
-                    <label class="form-label">Product Search & Select</label>
-                    <input type="text" class="form-input product-search-input mb-2 text-sm" placeholder="🔍 Search product name..." style="padding: 8px 12px; margin-bottom: 8px;" />
-                    <select name="product_ids" class="form-input product-select" required>
-                        <option value="">Select a Product</option>
-                        {% for product in products %}
-                            <option value="{{ product.id }}" data-price="{{ product.unit_price }}" data-qty="{{ product.quantity }}">
-                                {{ product.name }}{% if product.sku %} [{{ product.sku }}]{% endif %} (₦{{ product.unit_price }}) - In Stock: {{ product.quantity }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <div class="no-match-msg text-xs text-[var(--accent-red)] mt-1.5 hidden font-medium">⚠️ No product match found</div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Available</label>
-                    <input type="text" class="form-input available-display" readonly placeholder="0">
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Quantity</label>
-                    <input type="number" name="quantities" class="form-input qty-input" min="1" required placeholder="Qty">
-                </div>
-
-                <button type="button" class="btn btn-danger remove-row-btn p-3 mt-7 hidden" style="height: 42px; width: 42px;">
-                    &times;
-                </button>
+    {% if not products %}
+        <div class="text-center py-12 px-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-3 border border-amber-200/60 text-lg">
+                <i class="fas fa-box-open"></i>
             </div>
-        </div>
-
-        <div style="margin: 24px 0; display: flex; justify-content: space-between; align-items: center;">
-            <button type="button" class="btn btn-secondary" id="add-row-btn">
-                + Add Item
-            </button>
-            <div class="text-right">
-                <span class="text-[var(--text-secondary)] text-sm font-medium">Estimated Total:</span>
-                <span id="estimated-total" class="text-[var(--accent-green)] text-2xl font-bold ml-2">₦0.00</span>
-            </div>
-        </div>
-
-        <div class="flex gap-3 mt-8 justify-end border-t border-[var(--border-color)] pt-6">
-            <a href="{{ url('inventory:sale_list') }}" class="btn btn-secondary">
-                Cancel
+            <h3 class="text-base font-bold text-slate-900">No Inventory Available</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-5 leading-relaxed">
+                All products currently have zero stock. Please add new products or update quantities in your catalog before recording a sale.
+            </p>
+            <a href="{{ url('inventory:product_add') }}" class="btn btn-primary text-xs py-2 px-4 inline-flex items-center gap-1.5">
+                <i class="fas fa-plus text-[10px]"></i> Add Product
             </a>
-            <button type="submit" class="btn btn-primary" id="btn-submit-sale">
-                Complete Sale
-            </button>
         </div>
-    </form>
+    {% else %}
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
+            <form method="POST" id="sale-form" class="space-y-6">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+                <!-- Quick Product Search / Scan Bar -->
+                <div class="relative">
+                    <div class="relative flex items-center">
+                        <i class="fas fa-search absolute left-3.5 text-slate-400 text-xs pointer-events-none"></i>
+                        <input
+                            type="text"
+                            id="quick-product-search"
+                            placeholder="Quick search product name or SKU to add item..."
+                            class="form-input text-xs py-2.5 pl-9 pr-4 rounded-xl border-slate-200 bg-slate-50 focus:bg-white w-full"
+                            autocomplete="off"
+                        />
+                    </div>
+                    <!-- Quick Search Results Dropdown -->
+                    <div id="search-results-dropdown" class="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto hidden">
+                    </div>
+                </div>
+
+                <!-- Items Section -->
+                <div>
+                    <!-- Table Headers (Desktop) -->
+                    <div class="hidden sm:grid grid-cols-12 gap-3 text-xs font-bold uppercase tracking-wider text-slate-500 pb-2.5 border-b border-slate-200">
+                        <div class="col-span-5">Product</div>
+                        <div class="col-span-2 text-right">Unit Price</div>
+                        <div class="col-span-2 text-center">Quantity</div>
+                        <div class="col-span-2 text-right">Line Total</div>
+                        <div class="col-span-1 text-center">Action</div>
+                    </div>
+
+                    <!-- Items Rows Container -->
+                    <div id="items-container" class="divide-y divide-slate-100">
+                    </div>
+
+                    <!-- Add Item Button -->
+                    <div class="pt-4">
+                        <button
+                            type="button"
+                            id="add-row-btn"
+                            class="btn btn-secondary text-xs py-2 px-3.5 inline-flex items-center gap-1.5 border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 rounded-xl"
+                        >
+                            <i class="fas fa-plus text-[10px]"></i> Add Another Item
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary & Actions -->
+                <div class="pt-5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/70 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6 p-5 sm:p-6 rounded-b-2xl">
+                    <div class="text-xs text-slate-500">
+                        <span class="block text-[11px] uppercase tracking-wider font-semibold text-slate-400">Order Summary</span>
+                        <div class="mt-1 font-medium text-slate-700">
+                            <span id="total-items-count" class="font-bold text-slate-900">0</span> items
+                            (<span id="total-units-count" class="font-bold text-slate-900">0</span> units)
+                        </div>
+                    </div>
+
+                    <div class="flex items-center sm:text-right gap-6 justify-between sm:justify-end">
+                        <div>
+                            <span class="block text-[11px] uppercase tracking-wider font-semibold text-slate-400">Total Amount</span>
+                            <span id="sale-grand-total" class="text-2xl font-extrabold text-[#1b4332] tracking-tight">₦0.00</span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url('inventory:sale_list') }}" class="btn btn-secondary text-xs py-2.5 px-4 rounded-xl">
+                                Cancel
+                            </a>
+                            <button
+                                type="submit"
+                                id="btn-submit-sale"
+                                class="btn btn-primary text-xs py-2.5 px-5 rounded-xl font-semibold inline-flex items-center gap-2 bg-[#1b4332] hover:bg-[#143326]"
+                            >
+                                <i class="fas fa-check"></i> Complete Sale
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    {% endif %}
 </div>
 
+<!-- Pristine Row Template (Never mutated by search or DOM operations) -->
+<template id="row-template">
+    <div class="sale-item-row grid grid-cols-12 gap-3 items-center py-3">
+        <!-- Product Select -->
+        <div class="col-span-12 sm:col-span-5">
+            <span class="sm:hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Product</span>
+            <select name="product_ids" class="form-input product-select text-xs py-2 px-3 border-slate-200 rounded-xl w-full" required>
+                <option value="">Select a product...</option>
+                {% for p in products %}
+                    <option
+                        value="{{ p.id }}"
+                        data-price="{{ p.unit_price }}"
+                        data-qty="{{ p.quantity }}"
+                        data-name="{{ p.name }}"
+                        data-sku="{{ p.sku or '' }}"
+                    >
+                        {{ p.name }}{% if p.sku %} [{{ p.sku }}]{% endif %} (Stock: {{ p.quantity }})
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="stock-info text-[11px] text-slate-400 mt-1 hidden">
+                In Stock: <span class="stock-qty-val font-semibold text-slate-700">0</span>
+            </div>
+        </div>
+
+        <!-- Unit Price -->
+        <div class="col-span-6 sm:col-span-2">
+            <span class="sm:hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Unit Price</span>
+            <div class="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-right unit-price-display">
+                ₦0.00
+            </div>
+        </div>
+        
+        <!-- Quantity -->
+        <div class="col-span-6 sm:col-span-2">
+            <span class="sm:hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Quantity</span>
+            <input
+                type="number"
+                name="quantities"
+                class="form-input qty-input text-xs py-2 px-3 text-center border-slate-200 rounded-xl w-full"
+                min="1"
+                value="1"
+                placeholder="1"
+                required
+            />
+            <div class="stock-error text-[10px] text-rose-600 font-medium mt-1 hidden">
+                Exceeds stock!
+            </div>
+        </div>
+
+        <!-- Line Total -->
+        <div class="col-span-8 sm:col-span-2">
+            <span class="sm:hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Line Total</span>
+            <div class="text-xs font-bold text-emerald-800 bg-emerald-50/60 border border-emerald-200/60 rounded-xl py-2 px-3 text-right line-total-display">
+                ₦0.00
+            </div>
+        </div>
+
+        <!-- Remove Action -->
+        <div class="col-span-4 sm:col-span-1 flex justify-end sm:justify-center">
+            <button
+                type="button"
+                class="remove-row-btn w-8 h-8 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 flex items-center justify-center transition-colors"
+                title="Remove item"
+            >
+                <i class="fas fa-trash-can text-xs"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const itemsContainer = document.getElementById('items-container');
-        const addRowBtn = document.getElementById('add-row-btn');
-        const estimatedTotal = document.getElementById('estimated-total');
+document.addEventListener('DOMContentLoaded', function() {
+    const itemsContainer = document.getElementById('items-container');
+    const rowTemplate = document.getElementById('row-template');
+    if (!itemsContainer || !rowTemplate) return;
 
-        function updateAvailableQty(selectEl) {
-            const row = selectEl.closest('.sale-item-row');
-            const availableInput = row.querySelector('.available-display');
-            const selectedOpt = selectEl.options[selectEl.selectedIndex];
-            if (selectedOpt && selectedOpt.value) {
-                availableInput.value = selectedOpt.dataset.qty || '0';
-                const qtyInput = row.querySelector('.qty-input');
-                qtyInput.max = selectedOpt.dataset.qty;
+    const addRowBtn = document.getElementById('add-row-btn');
+    const saleForm = document.getElementById('sale-form');
+    const submitBtn = document.getElementById('btn-submit-sale');
+    const saleGrandTotal = document.getElementById('sale-grand-total');
+    const totalItemsCount = document.getElementById('total-items-count');
+    const totalUnitsCount = document.getElementById('total-units-count');
+    const quickSearchInput = document.getElementById('quick-product-search');
+    const searchResultsDropdown = document.getElementById('search-results-dropdown');
+
+    // Products catalog data
+    const PRODUCTS = {{ products_json|default('[]')|safe }};
+
+    const PRODUCTS_MAP = {};
+    PRODUCTS.forEach(function(p) {
+        PRODUCTS_MAP[p.id] = p;
+    });
+
+    function formatCurrency(amount) {
+        return '₦' + Number(amount || 0).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function syncRow(row) {
+        const select = row.querySelector('.product-select');
+        const qtyInput = row.querySelector('.qty-input');
+        const priceDisplay = row.querySelector('.unit-price-display');
+        const totalDisplay = row.querySelector('.line-total-display');
+        const stockInfo = row.querySelector('.stock-info');
+        const stockVal = row.querySelector('.stock-qty-val');
+        const stockError = row.querySelector('.stock-error');
+
+        const product = PRODUCTS_MAP[select.value];
+        if (product) {
+            priceDisplay.textContent = formatCurrency(product.price);
+            stockVal.textContent = product.stock;
+            stockInfo.classList.remove('hidden');
+            qtyInput.max = product.stock;
+
+            const qty = parseInt(qtyInput.value, 10) || 0;
+            const lineTotal = product.price * qty;
+            totalDisplay.textContent = formatCurrency(lineTotal);
+
+            if (qty > product.stock) {
+                stockError.textContent = 'Exceeds stock (' + product.stock + ')';
+                stockError.classList.remove('hidden');
+                qtyInput.classList.add('border-rose-400', 'bg-rose-50');
+            } else if (qty <= 0) {
+                stockError.textContent = 'Min quantity is 1';
+                stockError.classList.remove('hidden');
+                qtyInput.classList.add('border-rose-400', 'bg-rose-50');
             } else {
-                availableInput.value = '0';
+                stockError.classList.add('hidden');
+                qtyInput.classList.remove('border-rose-400', 'bg-rose-50');
             }
-            calculateTotal();
+        } else {
+            priceDisplay.textContent = '₦0.00';
+            totalDisplay.textContent = '₦0.00';
+            stockInfo.classList.add('hidden');
+            stockError.classList.add('hidden');
+            qtyInput.classList.remove('border-rose-400', 'bg-rose-50');
         }
+    }
 
-        function calculateTotal() {
-            let total = 0;
-            const rows = itemsContainer.querySelectorAll('.sale-item-row');
-            rows.forEach(row => {
-                const select = row.querySelector('.product-select');
-                const qtyInput = row.querySelector('.qty-input');
-                if (select.selectedIndex >= 0) {
-                    const selectedOpt = select.options[select.selectedIndex];
-                    if (selectedOpt && selectedOpt.value && qtyInput.value) {
-                        const price = parseFloat(selectedOpt.dataset.price);
-                        const qty = parseInt(qtyInput.value);
-                        if (!isNaN(price) && !isNaN(qty)) {
-                            total += price * qty;
-                        }
-                    }
-                }
-            });
-            estimatedTotal.innerText = '₦' + total.toFixed(2);
-        }
+    function calculateTotals() {
+        let grandTotal = 0;
+        let totalItems = 0;
+        let totalUnits = 0;
+        let hasError = false;
 
-        function setupProductSearchAndEvents(row) {
+        const rows = itemsContainer.querySelectorAll('.sale-item-row');
+        rows.forEach(function(row) {
             const select = row.querySelector('.product-select');
-            const searchInput = row.querySelector('.product-search-input');
             const qtyInput = row.querySelector('.qty-input');
-            const removeBtn = row.querySelector('.remove-row-btn');
-            const noMatchMsg = row.querySelector('.no-match-msg');
+            const product = PRODUCTS_MAP[select.value];
 
-            // Save full options list reference
-            const allOptions = Array.from(select.options).map(opt => ({
-                value: opt.value,
-                text: opt.textContent,
-                price: opt.dataset.price || '',
-                qty: opt.dataset.qty || '',
-                isDefault: opt.value === ""
-            }));
+            if (product) {
+                const qty = parseInt(qtyInput.value, 10) || 0;
+                if (qty > 0) {
+                    totalItems += 1;
+                    totalUnits += qty;
+                    grandTotal += product.price * qty;
+                }
+                if (qty > product.stock || qty <= 0) {
+                    hasError = true;
+                }
+            }
+        });
 
-            function filterProducts() {
-                const query = searchInput.value.trim().toLowerCase();
-                const currentVal = select.value;
-                select.innerHTML = '';
+        saleGrandTotal.textContent = formatCurrency(grandTotal);
+        totalItemsCount.textContent = totalItems;
+        totalUnitsCount.textContent = totalUnits;
 
-                let matchCount = 0;
+        if (totalItems === 0 || hasError) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
 
-                allOptions.forEach(optData => {
-                    if (optData.isDefault) {
-                        const opt = document.createElement('option');
-                        opt.value = "";
-                        opt.textContent = "Select a Product";
-                        select.appendChild(opt);
-                    } else if (!query || optData.text.toLowerCase().includes(query)) {
-                        matchCount++;
-                        const opt = document.createElement('option');
-                        opt.value = optData.value;
-                        opt.textContent = optData.text;
-                        opt.dataset.price = optData.price;
-                        opt.dataset.qty = optData.qty;
-                        select.appendChild(opt);
-                    }
+    function updateRemoveButtonStates() {
+        const rows = itemsContainer.querySelectorAll('.sale-item-row');
+        rows.forEach(function(row) {
+            const btn = row.querySelector('.remove-row-btn');
+            if (rows.length === 1) {
+                btn.title = "Clear item";
+            } else {
+                btn.title = "Remove item";
+            }
+        });
+    }
+
+    function createRow(initialProductId, initialQty) {
+        const row = rowTemplate.content.firstElementChild.cloneNode(true);
+        const select = row.querySelector('.product-select');
+        const qtyInput = row.querySelector('.qty-input');
+        const removeBtn = row.querySelector('.remove-row-btn');
+
+        if (initialProductId) {
+            select.value = initialProductId;
+            qtyInput.value = initialQty || 1;
+        }
+
+        select.addEventListener('change', function() {
+            if (select.value && (!qtyInput.value || parseInt(qtyInput.value, 10) <= 0)) {
+                qtyInput.value = 1;
+            }
+            syncRow(row);
+            calculateTotals();
+        });
+
+        qtyInput.addEventListener('input', function() {
+            syncRow(row);
+            calculateTotals();
+        });
+
+        removeBtn.addEventListener('click', function() {
+            const allRows = itemsContainer.querySelectorAll('.sale-item-row');
+            if (allRows.length > 1) {
+                row.remove();
+            } else {
+                select.value = '';
+                qtyInput.value = '1';
+                syncRow(row);
+            }
+            calculateTotals();
+            updateRemoveButtonStates();
+        });
+
+        itemsContainer.appendChild(row);
+        syncRow(row);
+        calculateTotals();
+        updateRemoveButtonStates();
+        return row;
+    }
+
+    // Initialize first row
+    createRow();
+
+    if (addRowBtn) {
+        addRowBtn.addEventListener('click', function() {
+            createRow();
+        });
+    }
+
+    // Quick Search & Scan
+    if (quickSearchInput && searchResultsDropdown) {
+        let activeMatches = [];
+
+        function renderSearchResults(matches) {
+            activeMatches = matches;
+            searchResultsDropdown.innerHTML = '';
+
+            if (matches.length === 0) {
+                searchResultsDropdown.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center">No matching products found</div>';
+                searchResultsDropdown.classList.remove('hidden');
+                return;
+            }
+
+            matches.slice(0, 8).forEach(function(product) {
+                const item = document.createElement('div');
+                item.className = 'p-2.5 hover:bg-emerald-50 cursor-pointer flex items-center justify-between text-xs border-b border-slate-100 last:border-b-0 transition-colors';
+                item.dataset.id = product.id;
+
+                const skuTag = product.sku ? ' <span class="text-slate-400 font-mono text-[11px]">[' + product.sku + ']</span>' : '';
+                item.innerHTML = '<div><strong class="text-slate-800">' + product.name + '</strong>' + skuTag + '</div>' +
+                                 '<div class="text-right ml-4 shrink-0"><span class="font-bold text-emerald-700">' + formatCurrency(product.price) + '</span><span class="text-[10px] text-slate-400 block">' + product.stock + ' in stock</span></div>';
+
+                item.addEventListener('click', function() {
+                    addOrSelectProduct(product);
                 });
 
-                if (query && matchCount === 0) {
-                    // No match found -> return nothing!
-                    select.value = "";
-                    noMatchMsg.classList.remove('hidden');
-                    noMatchMsg.textContent = 'No product match for "' + searchInput.value + '"';
-                } else {
-                    noMatchMsg.classList.add('hidden');
-                    // Try to preserve current selection if still valid
-                    if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
-                        select.value = currentVal;
-                    } else if (query && matchCount === 1) {
-                        select.selectedIndex = 1;
+                searchResultsDropdown.appendChild(item);
+            });
+
+            searchResultsDropdown.classList.remove('hidden');
+        }
+
+        function addOrSelectProduct(product) {
+            // Check if product is already in one of the existing rows
+            const rows = itemsContainer.querySelectorAll('.sale-item-row');
+            let foundExisting = false;
+
+            for (let i = 0; i < rows.length; i++) {
+                const r = rows[i];
+                const sel = r.querySelector('.product-select');
+                if (sel.value === product.id) {
+                    const qtyInp = r.querySelector('.qty-input');
+                    const curQty = parseInt(qtyInp.value, 10) || 0;
+                    if (curQty < product.stock) {
+                        qtyInp.value = curQty + 1;
+                    }
+                    syncRow(r);
+                    calculateTotals();
+                    foundExisting = true;
+                    break;
+                }
+            }
+
+            if (!foundExisting) {
+                // Check if there is an empty row we can use
+                let emptyRow = null;
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i];
+                    const sel = r.querySelector('.product-select');
+                    if (!sel.value) {
+                        emptyRow = r;
+                        break;
                     }
                 }
 
-                updateAvailableQty(select);
+                if (emptyRow) {
+                    const sel = emptyRow.querySelector('.product-select');
+                    const qtyInp = emptyRow.querySelector('.qty-input');
+                    sel.value = product.id;
+                    qtyInp.value = 1;
+                    syncRow(emptyRow);
+                    calculateTotals();
+                } else {
+                    createRow(product.id, 1);
+                }
             }
 
-            searchInput.addEventListener('input', filterProducts);
-
-            select.addEventListener('change', function() {
-                updateAvailableQty(select);
-            });
-
-            qtyInput.addEventListener('input', calculateTotal);
-
-            removeBtn.addEventListener('click', function() {
-                row.remove();
-                calculateTotal();
-                updateRemoveButtons();
-            });
+            quickSearchInput.value = '';
+            searchResultsDropdown.classList.add('hidden');
+            quickSearchInput.focus();
         }
 
-        function updateRemoveButtons() {
-            const rows = itemsContainer.querySelectorAll('.sale-item-row');
-            rows.forEach(row => {
-                const removeBtn = row.querySelector('.remove-row-btn');
-                if (rows.length > 1) {
-                    removeBtn.classList.remove('hidden');
-                    removeBtn.style.display = 'inline-flex';
-                } else {
-                    removeBtn.classList.add('hidden');
-                    removeBtn.style.display = 'none';
-                }
+        quickSearchInput.addEventListener('input', function() {
+            const query = quickSearchInput.value.trim().toLowerCase();
+            if (!query) {
+                searchResultsDropdown.classList.add('hidden');
+                activeMatches = [];
+                return;
+            }
+
+            const matches = PRODUCTS.filter(function(p) {
+                return p.name.toLowerCase().includes(query) || (p.sku && p.sku.toLowerCase().includes(query));
             });
-        }
 
-        // Initialize first row
-        const firstRow = itemsContainer.querySelector('.sale-item-row');
-        setupProductSearchAndEvents(firstRow);
-
-        addRowBtn.addEventListener('click', function() {
-            const newRow = firstRow.cloneNode(true);
-
-            // Clear values
-            newRow.querySelector('.product-search-input').value = '';
-            newRow.querySelector('.available-display').value = '';
-            newRow.querySelector('.qty-input').value = '';
-            newRow.querySelector('.no-match-msg').classList.add('hidden');
-
-            itemsContainer.appendChild(newRow);
-            setupProductSearchAndEvents(newRow);
-            updateRemoveButtons();
+            renderSearchResults(matches);
         });
-    });
+
+        quickSearchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeMatches.length > 0) {
+                    addOrSelectProduct(activeMatches[0]);
+                }
+            } else if (e.key === 'Escape') {
+                searchResultsDropdown.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!quickSearchInput.contains(e.target) && !searchResultsDropdown.contains(e.target)) {
+                searchResultsDropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    // Form submit guard
+    if (saleForm) {
+        saleForm.addEventListener('submit', function(e) {
+            const rows = itemsContainer.querySelectorAll('.sale-item-row');
+            let validRows = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const r = rows[i];
+                const sel = r.querySelector('.product-select');
+                const qtyInp = r.querySelector('.qty-input');
+                const product = PRODUCTS_MAP[sel.value];
+
+                if (product) {
+                    const qty = parseInt(qtyInp.value, 10) || 0;
+                    if (qty <= 0 || qty > product.stock) {
+                        e.preventDefault();
+                        alert('Please correct invalid quantities before submitting.');
+                        return;
+                    }
+                    validRows++;
+                }
+            }
+
+            if (validRows === 0) {
+                e.preventDefault();
+                alert('Please select at least one product with valid quantity.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        });
+    }
+});
 </script>
 {% endblock %}
-

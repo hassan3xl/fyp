@@ -36,6 +36,7 @@ class TenantIsolationMiddleware:
             else:
                 return redirect('/')
 
+            request.tenant = tenant
             request.tenant_id = str(tenant.id)
             request.business_type = tenant.business_type
             request.plan = tenant.plan
@@ -51,6 +52,7 @@ class TenantIsolationMiddleware:
                     elif user_tenant.is_onboarded and request.path == '/':
                         return redirect(f'/{user_tenant.slug}/')
 
+            request.tenant = None
             request.tenant_id = None
             request.business_type = None
             request.plan = None

@@ -4,43 +4,74 @@
 {% block page_header %}Add Category{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 540px; margin: 0 auto;">
-    <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">
-        New Category
-    </h2>
-    <form method="POST">
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
-        {% if form.non_field_errors() %}
-            <div class="alert alert-error">
-                <span>{{ form.non_field_errors()[0] }}</span>
-            </div>
-        {% endif %}
-
-        <div class="form-group">
-            <label class="form-label" for="{{ form.name.id_for_label }}">Category Name</label>
-            {{ form.name }}
-            {% if form.name.errors %}
-                <div class="form-error">{{ form.name.errors[0] }}</div>
-            {% endif %}
+<div class="max-w-xl mx-auto space-y-6">
+    <!-- Header & Navigation -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-slate-900">New Category</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Create a classification for organizing your store products</p>
         </div>
-
-        <div class="form-group">
-            <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
-            {{ form.description }}
-            {% if form.description.errors %}
-                <div class="form-error">{{ form.description.errors[0] }}</div>
-            {% endif %}
-        </div>
-
-        <div style="display: flex; gap: 12px; margin-top: 32px; justify-content: flex-end;">
-            <a href="{{ url('inventory:category_list') }}" class="btn btn-secondary">
-                Cancel
+        <div>
+            <a href="{{ url('inventory:category_list') }}" class="btn btn-secondary text-xs py-2 px-3 inline-flex items-center gap-1.5 rounded-xl">
+                <i class="fas fa-arrow-left text-[10px]"></i> Categories
             </a>
-            <button type="submit" class="btn btn-primary" id="btn-save-category">
-                Save Category
-            </button>
         </div>
-    </form>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <form method="POST" class="space-y-5">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+            {% if form.non_field_errors() %}
+                <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-start gap-2.5">
+                    <i class="fas fa-circle-exclamation text-rose-500 mt-0.5 shrink-0"></i>
+                    <span>{{ form.non_field_errors()[0] }}</span>
+                </div>
+            {% endif %}
+
+            <!-- Category Name -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700" for="{{ form.name.id_for_label }}">
+                    Category Name <span class="text-rose-500">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <div class="text-rose-600 text-xs font-medium mt-1 flex items-center gap-1">
+                        <i class="fas fa-triangle-exclamation text-[10px]"></i>
+                        <span>{{ form.name.errors[0] }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700" for="{{ form.description.id_for_label }}">
+                    Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="text-rose-600 text-xs font-medium mt-1">
+                        {{ form.description.errors[0] }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Form Actions -->
+            <div class="pt-6 border-t border-slate-200 flex items-center justify-end gap-3">
+                <a href="{{ url('inventory:category_list') }}" class="btn btn-secondary text-xs py-2.5 px-4 rounded-xl">
+                    Cancel
+                </a>
+                <button
+                    type="submit"
+                    class="btn btn-primary text-xs py-2.5 px-5 font-semibold inline-flex items-center gap-2 rounded-xl bg-[#1b4332] hover:bg-[#143326]"
+                    id="btn-save-category"
+                >
+                    <i class="fas fa-check"></i>
+                    <span>Save Category</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

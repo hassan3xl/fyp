@@ -15,6 +15,8 @@ from app.views import (
     sale_return_new,
     return_list,
     return_detail,
+    return_pdf,
+    sale_pdf,
 )
 
 app_name = 'inventory'
@@ -33,7 +35,9 @@ urlpatterns = [
     path('sales/lookup/', sale_lookup, name='sale_lookup'),
     path('sales/<uuid:pk>/', sale_detail, name='sale_detail'),
     path('sales/<uuid:pk>/return/', sale_return_new, name='sale_return_new'),
+    path('sales/<uuid:pk>/pdf/', sale_pdf, name='sale_pdf'),
     path('returns/', return_list, name='return_list'),
     path('returns/<uuid:pk>/', return_detail, name='return_detail'),
+    path('returns/<uuid:pk>/pdf/', return_pdf, name='return_pdf'),
 ]
 

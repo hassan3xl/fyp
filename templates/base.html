@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}SaaS Multi-Tenant Inventory & POS Platform{% endblock %}</title>
+    <title>{% block title %}Shared-Infrastructure SaaS Framework with RLS & Rate Limiting for Retail SMEs{% endblock %}</title>
 
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,6 +37,24 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ static('css/style.css') }}" />
+    <style>
+      @media print {
+        aside, .sidebar, header, .header, footer, .app-footer, .no-print, #banner, #rate-limit-modal {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          width: 0 !important;
+          overflow: hidden !important;
+        }
+        body, .min-h-screen, .main-wrapper, main {
+          display: block !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #ffffff !important;
+        }
+      }
+    </style>
     {% block extra_css %}{% endblock extra_css %}
   </head>
   

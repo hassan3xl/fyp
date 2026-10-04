@@ -4,132 +4,212 @@
 {% block page_header %}{{ action }} Product{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 680px; margin: 0 auto;">
-    <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">
-        {{ action }} Product Details
-    </h2>
-    <form method="POST">
-        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
-        {% if form.non_field_errors() %}
-            <div class="alert alert-error">
-                <span>{{ form.non_field_errors()[0] }}</span>
-            </div>
-        {% endif %}
-
-        <!-- Common fields -->
-        <div class="form-group">
-            <label class="form-label" for="{{ form.name.id_for_label }}">Product Name</label>
-            {{ form.name }}
-            {% if form.name.errors %}
-                <div class="form-error">{{ form.name.errors[0] }}</div>
-            {% endif %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <!-- Top Header & Back Navigation -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-slate-900">{{ action }} Product</h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+                {% if action == 'Edit' %}Update product specifications and inventory levels{% else %}Add a new item to your store's inventory catalog{% endif %}
+            </p>
         </div>
-
-        <div class="form-group">
-            <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
-            {{ form.category }}
-            {% if form.category.errors %}
-                <div class="form-error">{{ form.category.errors[0] }}</div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="{{ form.sku.id_for_label }}">Product Code / SKU</label>
-            {{ form.sku }}
-            {% if form.sku.errors %}
-                <div class="form-error">{{ form.sku.errors[0] }}</div>
-            {% endif %}
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="form-group">
-                <label class="form-label" for="{{ form.quantity.id_for_label }}">Quantity in Stock</label>
-                {{ form.quantity }}
-                {% if form.quantity.errors %}
-                    <div class="form-error">{{ form.quantity.errors[0] }}</div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="{{ form.unit_price.id_for_label }}">Unit Price (₦)</label>
-                {{ form.unit_price }}
-                {% if form.unit_price.errors %}
-                    <div class="form-error">{{ form.unit_price.errors[0] }}</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Conditional fields based on business_type -->
-        {% if business_type == 'pharmacy' %}
-            <div style="border-top: 1px solid var(--border-color); margin: 24px 0; padding-top: 24px;">
-                <h4 style="margin-bottom: 16px; color: var(--accent-primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Pharmacy Information</h4>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label class="form-label" for="{{ form.batch_number.id_for_label }}">Batch Number</label>
-                        {{ form.batch_number }}
-                        {% if form.batch_number.errors %}
-                            <div class="form-error">{{ form.batch_number.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="{{ form.manufacturer.id_for_label }}">Manufacturer</label>
-                        {{ form.manufacturer }}
-                        {% if form.manufacturer.errors %}
-                            <div class="form-error">{{ form.manufacturer.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label class="form-label" for="{{ form.expiry_date.id_for_label }}">Expiry Date</label>
-                        {{ form.expiry_date }}
-                        {% if form.expiry_date.errors %}
-                            <div class="form-error">{{ form.expiry_date.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="{{ form.nafdac_number.id_for_label }}">NAFDAC Number</label>
-                        {{ form.nafdac_number }}
-                        {% if form.nafdac_number.errors %}
-                            <div class="form-error">{{ form.nafdac_number.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        {% elif business_type == 'provision_store' %}
-            <div style="border-top: 1px solid var(--border-color); margin: 24px 0; padding-top: 24px;">
-                <h4 style="margin-bottom: 16px; color: var(--accent-blue); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Retail/Provision Store Information</h4>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label class="form-label" for="{{ form.reorder_level.id_for_label }}">Reorder Level</label>
-                        {{ form.reorder_level }}
-                        {% if form.reorder_level.errors %}
-                            <div class="form-error">{{ form.reorder_level.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="{{ form.supplier_code.id_for_label }}">Supplier Code</label>
-                        {{ form.supplier_code }}
-                        {% if form.supplier_code.errors %}
-                            <div class="form-error">{{ form.supplier_code.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        {% endif %}
-
-        <div style="display: flex; gap: 12px; margin-top: 32px; justify-content: flex-end;">
-            <a href="{{ url('inventory:product_list') }}" class="btn btn-secondary">
-                Cancel
+        <div>
+            <a href="{{ url('inventory:product_list') }}" class="btn btn-secondary text-xs py-2 px-3 inline-flex items-center gap-1.5 rounded-xl">
+                <i class="fas fa-arrow-left text-[10px]"></i> Products List
             </a>
-            <button type="submit" class="btn btn-primary" id="btn-save-product">
-                Save Product
-            </button>
         </div>
-    </form>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <form method="POST" class="space-y-5">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+            {% if form.non_field_errors() %}
+                <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-start gap-2.5">
+                    <i class="fas fa-circle-exclamation text-rose-500 mt-0.5 shrink-0"></i>
+                    <span>{{ form.non_field_errors()[0] }}</span>
+                </div>
+            {% endif %}
+
+            <!-- Product Name -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700" for="{{ form.name.id_for_label }}">
+                    Product Name <span class="text-rose-500">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <div class="text-rose-600 text-xs font-medium mt-1 flex items-center gap-1">
+                        <i class="fas fa-triangle-exclamation text-[10px]"></i>
+                        <span>{{ form.name.errors[0] }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Category & SKU (2 columns) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700" for="{{ form.category.id_for_label }}">
+                            Category
+                        </label>
+                        <a href="{{ url('inventory:category_add') }}" class="text-[11px] font-semibold text-emerald-700 hover:underline inline-flex items-center gap-1">
+                            <i class="fas fa-plus text-[9px]"></i> New Category
+                        </a>
+                    </div>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <div class="text-rose-600 text-xs font-medium mt-1">
+                            {{ form.category.errors[0] }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700" for="{{ form.sku.id_for_label }}">
+                        Product Code / SKU
+                    </label>
+                    {{ form.sku }}
+                    {% if form.sku.errors %}
+                        <div class="text-rose-600 text-xs font-medium mt-1">
+                            {{ form.sku.errors[0] }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quantity & Unit Price (2 columns) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700" for="{{ form.quantity.id_for_label }}">
+                        Quantity in Stock <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.quantity }}
+                    {% if form.quantity.errors %}
+                        <div class="text-rose-600 text-xs font-medium mt-1">
+                            {{ form.quantity.errors[0] }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700" for="{{ form.unit_price.id_for_label }}">
+                        Unit Price (₦) <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.unit_price }}
+                    {% if form.unit_price.errors %}
+                        <div class="text-rose-600 text-xs font-medium mt-1">
+                            {{ form.unit_price.errors[0] }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pharmacy Specialized Fields -->
+            {% if business_type == 'pharmacy' %}
+                <div class="pt-6 border-t border-slate-200 space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center justify-center text-xs">
+                            <i class="fas fa-prescription-bottle-medical text-[11px]"></i>
+                        </span>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                            Pharmacy Information
+                        </h4>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-semibold text-slate-700" for="{{ form.batch_number.id_for_label }}">
+                                Batch Number
+                            </label>
+                            {{ form.batch_number }}
+                            {% if form.batch_number.errors %}
+                                <div class="text-rose-600 text-xs font-medium mt-1">{{ form.batch_number.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-semibold text-slate-700" for="{{ form.manufacturer.id_for_label }}">
+                                Manufacturer
+                            </label>
+                            {{ form.manufacturer }}
+                            {% if form.manufacturer.errors %}
+                                <div class="text-rose-600 text-xs font-medium mt-1">{{ form.manufacturer.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-semibold text-slate-700" for="{{ form.expiry_date.id_for_label }}">
+                                Expiry Date
+                            </label>
+                            {{ form.expiry_date }}
+                            {% if form.expiry_date.errors %}
+                                <div class="text-rose-600 text-xs font-medium mt-1">{{ form.expiry_date.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-semibold text-slate-700" for="{{ form.nafdac_number.id_for_label }}">
+                                NAFDAC Number
+                            </label>
+                            {{ form.nafdac_number }}
+                            {% if form.nafdac_number.errors %}
+                                <div class="text-rose-600 text-xs font-medium mt-1">{{ form.nafdac_number.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            <!-- Provision Store / Supermarket Fields -->
+            {% elif business_type == 'provision_store' %}
+                <div class="pt-6 border-t border-slate-200 space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/60 flex items-center justify-center text-xs">
+                            <i class="fas fa-store text-[11px]"></i>
+                        </span>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                            Retail / Provision Store Details
+                        </h4>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-semibold text-slate-700" for="{{ form.reorder_level.id_for_label }}">
+                                Reorder Level
+                            </label>
+                            {{ form.reorder_level }}
+                            {% if form.reorder_level.errors %}
+                                <div class="text-rose-600 text-xs font-medium mt-1">{{ form.reorder_level.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-semibold text-slate-700" for="{{ form.supplier_code.id_for_label }}">
+                                Supplier Code
+                            </label>
+                            {{ form.supplier_code }}
+                            {% if form.supplier_code.errors %}
+                                <div class="text-rose-600 text-xs font-medium mt-1">{{ form.supplier_code.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Form Actions -->
+            <div class="pt-6 border-t border-slate-200 flex items-center justify-end gap-3">
+                <a href="{{ url('inventory:product_list') }}" class="btn btn-secondary text-xs py-2.5 px-4 rounded-xl">
+                    Cancel
+                </a>
+                <button
+                    type="submit"
+                    class="btn btn-primary text-xs py-2.5 px-5 font-semibold inline-flex items-center gap-2 rounded-xl bg-[#1b4332] hover:bg-[#143326]"
+                    id="btn-save-product"
+                >
+                    <i class="fas fa-check"></i>
+                    <span>{{ action }} Product</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

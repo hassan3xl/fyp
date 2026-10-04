@@ -4,17 +4,35 @@
 {% block page_header %}Dashboard Overview{% endblock %}
 
 {% block content %}
+
+
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
   <div class="card p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
-    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Products</div>
+    <div class="flex items-center justify-between">
+      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Products</div>
+      <a href="{{ url('inventory:product_add') }}" class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline inline-flex items-center gap-1" id="btn-dashboard-add-product" title="Add New Product">
+        <i class="fas fa-plus text-[9px]"></i> Add Product
+      </a>
+    </div>
     <div class="text-2xl font-extrabold text-slate-900 mt-2">{{ total_products }}</div>
-    <span class="inline-block text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 border border-emerald-200/60">Active Catalog</span>
+    <div class="flex items-center justify-between mt-2">
+      <span class="inline-block text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">Active Catalog</span>
+      <a href="{{ url('inventory:product_list') }}" class="text-[11px] text-slate-500 hover:text-slate-800 hover:underline">View All &rarr;</a>
+    </div>
   </div>
 
   <div class="card p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
-    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Categories</div>
+    <div class="flex items-center justify-between">
+      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Categories</div>
+      <a href="{{ url('inventory:category_add') }}" class="text-[11px] font-semibold text-blue-700 hover:text-blue-800 hover:underline inline-flex items-center gap-1" id="btn-dashboard-add-category" title="Add New Category">
+        <i class="fas fa-plus text-[9px]"></i> Add
+      </a>
+    </div>
     <div class="text-2xl font-extrabold text-slate-900 mt-2">{{ total_categories }}</div>
-    <span class="inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full mt-2 border border-blue-200/60">Classifications</span>
+    <div class="flex items-center justify-between mt-2">
+      <span class="inline-block text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/60">Classifications</span>
+      <a href="{{ url('inventory:category_list') }}" class="text-[11px] text-slate-500 hover:text-slate-800 hover:underline">View All &rarr;</a>
+    </div>
   </div>
 
   <div class="card p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
@@ -73,7 +91,7 @@
                   #{{ sale.id }}
                 </a>
               </td>
-              <td class="py-3 px-3 text-slate-700">{{ sale.user.username }}</td>
+              <td class="py-3 px-3 text-slate-700">{{ sale.cashier_name }}</td>
               <td class="py-3 px-3">
                 <span class="font-bold text-slate-900">₦{{ sale.total_amount }}</span>
                 {% if sale.has_returns %}

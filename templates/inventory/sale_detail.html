@@ -6,28 +6,40 @@
 {% block extra_css %}
 <style>
 @media print {
-    /* Hide non-printable layout elements */
-    .sidebar, .header, .app-footer, .no-print, nav, header, footer {
-        display: none !important;
+    @page {
+        size: A4 portrait;
+        margin: 8mm 12mm;
     }
-    body {
+    aside, .sidebar, header, .header, footer, .app-footer, .no-print, nav, #banner, #rate-limit-modal, [class*="sidebar"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+    }
+    html, body {
         background: #ffffff !important;
         color: #000000 !important;
-        font-family: 'Courier New', Courier, monospace !important;
-    }
-    .main-wrapper {
+        font-size: 11px !important;
         margin: 0 !important;
         padding: 0 !important;
+        width: 100% !important;
     }
-    .content-container {
+    .flex, .min-h-screen, .main-wrapper, main {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
         padding: 0 !important;
+        background: #ffffff !important;
     }
     #printable-receipt-card {
-        border: 1px solid #000000 !important;
+        border: none !important;
         box-shadow: none !important;
         max-width: 100% !important;
-        padding: 20px !important;
+        width: 100% !important;
+        padding: 0 !important;
         margin: 0 auto !important;
+        page-break-inside: avoid;
     }
 }
 </style>
@@ -48,13 +60,20 @@
                 <i class="fas fa-check-double mr-1.5"></i> Fully Returned
             </span>
         {% endif %}
-        <button type="button" onclick="window.print()" class="btn btn-secondary text-xs py-2 px-3.5 inline-flex items-center gap-2" id="btn-print-receipt">
+        <button type="button" onclick="printReceiptPdf('{{ url('inventory:sale_pdf', kwargs={'pk': sale.id}) }}')" class="btn btn-secondary text-xs py-2 px-3.5 inline-flex items-center gap-2" id="btn-print-receipt">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
                 <path d="M6 14h12v8H6z"/>
             </svg>
             Print Receipt
         </button>
+        <a href="{{ url('inventory:sale_pdf', kwargs={'pk': sale.id}) }}" target="_blank" class="btn btn-secondary text-xs py-2 px-3.5 inline-flex items-center gap-2" id="btn-download-pdf">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 4v12m-4-4l4 4 4-4"/>
+                <path d="M20 20H4"/>
+            </svg>
+            Download PDF
+        </a>
     </div>
 </div>
 
@@ -75,7 +94,7 @@
         <div class="text-right">
             <div class="text-xs text-slate-500">Date & Time:</div>
             <div class="font-bold text-slate-900 mt-0.5">{{ sale.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
-            <div class="text-xs text-slate-500 mt-2">Served By: <span class="font-semibold text-slate-800">{{ sale.user.username }}</span></div>
+            <div class="text-xs text-slate-500 mt-2">Served By: <span class="font-semibold text-slate-800">{{ sale.cashier_name or (sale.user.display_name if sale.user else 'Staff') }}</span></div>
             <div class="mt-2">
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold
                     {% if sale.status == 'completed' %}bg-emerald-100 text-emerald-800 border border-emerald-200
@@ -191,7 +210,7 @@
                                 {% if ret.reason_details %}&bull; <span class="italic text-slate-500">{{ ret.reason_details }}</span>{% endif %}
                             </div>
                             <div class="text-slate-500">
-                                Processed by: <span class="font-semibold text-slate-700">{{ ret.user.username }}</span>
+                                Processed by: <span class="font-semibold text-slate-700">{{ ret.cashier_name }}</span>
                             </div>
                         </div>
 
@@ -221,5 +240,32 @@
         <p>Please keep this receipt for your records and returns.</p>
     </div>
 </div>
+
+<script>
+function printReceiptPdf(url) {
+    const existing = document.getElementById('receipt-print-frame');
+    if (existing) existing.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'receipt-print-frame';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+
+    iframe.onload = function() {
+        try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        } catch (e) {
+            window.open(url, '_blank');
+        }
+    };
+}
+</script>
 {% endblock %}
 

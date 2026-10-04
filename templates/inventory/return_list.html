@@ -131,7 +131,7 @@
                             </td>
                             <td class="text-xs text-slate-600">
                                 <div>{{ ret.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-                                <div class="text-slate-400 mt-0.5">By: {{ ret.user.username }}</div>
+                                <div class="text-slate-400 mt-0.5">By: {{ ret.cashier_name }}</div>
                             </td>
                             <td style="text-align: right;">
                                 <a href="{{ url('inventory:return_detail', kwargs={'pk': ret.id}) }}" class="btn btn-secondary text-xs py-1.5 px-3" id="btn-view-return-{{ ret.id }}">

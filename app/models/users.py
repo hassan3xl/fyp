@@ -39,7 +39,6 @@ class User(AbstractUser):
         ('staff', 'Staff'),
     ]
     
-    username = None
     email = models.EmailField(unique=True)
     tenant = models.ForeignKey(TenantProfile, on_delete=models.CASCADE, related_name='users', null=True, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='staff')
@@ -48,6 +47,39 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+    @property
+    def display_name(self):
+        first = self.first_name
+        last = self.last_name
+        if not (first or last):
+            try:
+                if hasattr(self, 'profile') and self.profile:
+                    first = self.profile.first_name
+                    last = self.profile.last_name
+            except Exception:
+                pass
+        full_name = f"{first or ''} {last or ''}".strip()
+        if full_name:
+            return full_name
+        if self.email:
+            return self.email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
+        return "Staff"
+
+    @property
+    def username(self):
+        return self.display_name
+
+    @username.setter
+    def username(self, value):
+        # Allow assignment without error if external Django logic sets user.username
+        pass
+
+    def get_full_name(self):
+        return self.display_name
+
+    def get_short_name(self):
+        return self.first_name or (self.email.split('@')[0].title() if self.email else "Staff")
 
     def save(self, *args, **kwargs):
         if not self.tenant_id:

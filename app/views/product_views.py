@@ -1,7 +1,12 @@
 import uuid
+import json
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction, models
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.template.loader import render_to_string
+from app.utils import generate_pdf_from_html
 from app.models import Category, Product, Sale, SaleItem, ReturnTransaction, ReturnItem, ExchangeItem
 from app.forms import CategoryForm, ProductForm
 from app.models import TenantProfile, User, Tenant
@@ -16,33 +21,48 @@ def product_list(request, tenant_slug):
 
 def product_add(request, tenant_slug):
     if request.method == 'POST':
-        form = ProductForm(request.POST, business_type=request.business_type)
+        form = ProductForm(request.POST, business_type=request.business_type, tenant_id=request.tenant_id)
         if form.is_valid():
             product = form.save(commit=False)
             product.tenant_id = request.tenant_id
             product.save()
+            messages.success(request, f"Product '{product.name}' added successfully!")
             return redirect('inventory:product_list', tenant_slug=tenant_slug)
     else:
-        form = ProductForm(business_type=request.business_type)
-    return render(request, 'inventory/product_form.html', {'form': form, 'action': 'Add'})
+        form = ProductForm(business_type=request.business_type, tenant_id=request.tenant_id)
+    return render(request, 'inventory/product_form.html', {
+        'form': form,
+        'action': 'Add',
+        'business_type': request.business_type
+    })
 
 def product_edit(request, tenant_slug, pk):
     product = get_object_or_404(Product, pk=pk, tenant_id=request.tenant_id)
     if request.method == 'POST':
-        form = ProductForm(request.POST, instance=product, business_type=request.business_type)
+        form = ProductForm(request.POST, instance=product, business_type=request.business_type, tenant_id=request.tenant_id)
         if form.is_valid():
             product = form.save(commit=False)
             product.tenant_id = request.tenant_id
             product.save()
+            messages.success(request, f"Product '{product.name}' updated successfully!")
             return redirect('inventory:product_list', tenant_slug=tenant_slug)
     else:
-        form = ProductForm(instance=product, business_type=request.business_type)
-    return render(request, 'inventory/product_form.html', {'form': form, 'action': 'Edit', 'product': product})
+        form = ProductForm(instance=product, business_type=request.business_type, tenant_id=request.tenant_id)
+    return render(request, 'inventory/product_form.html', {
+        'form': form,
+        'action': 'Edit',
+        'product': product,
+        'business_type': request.business_type
+    })
 
 def product_delete(request, tenant_slug, pk):
     if request.method == 'POST':
         product = get_object_or_404(Product, pk=pk, tenant_id=request.tenant_id)
+        product_name = product.name
         product.delete()
+        messages.success(request, f"Product '{product_name}' deleted successfully.")
+        return redirect('inventory:product_list', tenant_slug=tenant_slug)
+    return redirect('inventory:product_list', tenant_slug=tenant_slug)
     return redirect('inventory:product_list', tenant_slug=tenant_slug)
 
 def category_list(request, tenant_slug):
@@ -108,10 +128,12 @@ def sale_new(request, tenant_slug):
         quantities = request.POST.getlist('quantities')
 
         with transaction.atomic():
-            total_amount = 0
+            total_amount = Decimal('0.00')
             sale_items_to_create = []
             products_to_update = []
 
+            # Aggregate quantities by product to prevent race/overwrite issues
+            aggregated_quantities = {}
             for pid, qty_str in zip(product_ids, quantities):
                 if not pid or not qty_str:
                     continue
@@ -121,14 +143,16 @@ def sale_new(request, tenant_slug):
                         continue
                 except ValueError:
                     continue
+                aggregated_quantities[pid] = aggregated_quantities.get(pid, 0) + qty
 
+            for pid, qty in aggregated_quantities.items():
                 try:
                     product = Product.objects.get(id=pid, tenant_id=request.tenant_id)
                 except Product.DoesNotExist:
                     continue
 
                 if product.quantity < qty:
-                    error = f"Not enough stock for {product.name}. Available: {product.quantity}."
+                    error = f"Not enough stock for {product.name}. Available: {product.quantity}, requested: {qty}."
                     break
 
                 item_total = product.unit_price * qty
@@ -161,12 +185,25 @@ def sale_new(request, tenant_slug):
                         unit_price=price
                     )
 
-                return redirect('inventory:sale_list', tenant_slug=tenant_slug)
+                messages.success(request, f"Sale recorded successfully! Total: ₦{total_amount:,.2f}")
+                return redirect('inventory:sale_detail', tenant_slug=tenant_slug, pk=sale.id)
 
-    products = Product.objects.filter(tenant_id=request.tenant_id, quantity__gt=0)
+    products = Product.objects.filter(tenant_id=request.tenant_id, quantity__gt=0).order_by('name')
+    products_json = json.dumps([
+        {
+            'id': str(p.id),
+            'name': p.name,
+            'sku': p.sku or '',
+            'price': float(p.unit_price),
+            'stock': p.quantity,
+        }
+        for p in products
+    ])
     return render(request, 'inventory/sale_new.html', {
         'products': products,
-        'error': error
+        'products_json': products_json,
+        'error': error,
+        'business_type': request.business_type
     })
 
 def sale_detail(request, tenant_slug, pk):
@@ -176,11 +213,37 @@ def sale_detail(request, tenant_slug, pk):
         'returned_items__product',
         'exchange_items__product'
     ).order_by('-created_at')
-    return render(request, 'inventory/sale_detail.html', {
+    context = {
         'sale': sale,
         'items': items,
         'returns': returns,
         'business_type': request.business_type
-    })
+    }
+    return render(request, 'inventory/sale_detail.html', context)
+
+def sale_pdf(request, tenant_slug, pk):
+    sale = get_object_or_404(Sale, pk=pk, tenant_id=request.tenant_id)
+    items = sale.items.all().select_related('product').prefetch_related('returns')
+    returns = sale.returns.all().select_related('user').prefetch_related(
+        'returned_items__product',
+        'exchange_items__product'
+    ).order_by('-created_at')
+
+    tenant_name = (
+        getattr(request, 'tenant_name', None)
+        or (request.tenant.name if getattr(request, 'tenant', None) else None)
+        or (sale.tenant.name if getattr(sale, 'tenant', None) else None)
+        or 'Store'
+    )
+    context = {
+        'sale': sale,
+        'items': items,
+        'returns': returns,
+        'business_type': getattr(request, 'business_type', 'retail'),
+        'tenant_name': tenant_name,
+    }
+    filename = f"receipt_{sale.id}.pdf"
+    return generate_pdf_from_html('inventory/receipt_pdf.html', context, filename)
+
 
 

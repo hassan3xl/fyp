@@ -5,12 +5,13 @@
 
 {% block content %}
 <div class="space-y-6">
+    <!-- Header & Action Row -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h2 class="text-xl font-bold text-slate-900">All Products</h2>
             <p class="text-xs text-slate-500 mt-0.5">Manage your catalog, stock levels, pricing, and batch details</p>
         </div>
-        <a href="{{ url('inventory:product_add') }}" class="btn btn-primary text-xs py-2.5 px-4 font-semibold inline-flex items-center gap-2 self-start sm:self-auto bg-[#1b4332] hover:bg-[#143326]" id="btn-add-product">
+        <a href="{{ url('inventory:product_add') }}" class="btn btn-primary text-xs py-2.5 px-4 font-semibold inline-flex items-center gap-2 self-start sm:self-auto rounded-xl bg-[#1b4332] hover:bg-[#143326]" id="btn-add-product">
             <i class="fas fa-plus"></i> Add Product
         </a>
     </div>
@@ -50,48 +51,57 @@
                                     {% endif %}
                                 </td>
                                 <td class="py-3.5 px-4 font-mono text-slate-600">{{ product.sku or '-' }}</td>
-                        <td>
-                            {% if business_type == 'pharmacy' and product.quantity <= 5 %}
-                                <span style="color: var(--accent-red); font-weight: 600;">{{ product.quantity }} (Low)</span>
-                            {% elif business_type == 'provision_store' and product.reorder_level and product.quantity <= product.reorder_level %}
-                                <span style="color: var(--accent-red); font-weight: 600;">{{ product.quantity }} (Low)</span>
-                            {% else %}
-                                {{ product.quantity }}
-                            {% endif %}
-                        </td>
-                        <td class="font-semibold text-[var(--accent-green)]">₦{{ product.unit_price }}</td>
-                        {% if business_type == 'pharmacy' %}
-                            <td>{{ product.batch_number or '-' }}</td>
-                            <td>{{ product.manufacturer or '-' }}</td>
-                            <td>{{ product.expiry_date or '-' }}</td>
-                            <td>{{ product.nafdac_number or '-' }}</td>
-                        {% elif business_type == 'provision_store' %}
-                            <td>{{ product.reorder_level or '-' }}</td>
-                            <td>{{ product.supplier_code or '-' }}</td>
-                        {% endif %}
-                        <td style="text-align: right;">
-                            <div style="display: inline-flex; gap: 8px;">
-                                <a href="{{ url('inventory:product_edit', kwargs={'pk': product.id}) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" id="btn-edit-{{ product.id }}">
-                                    Edit
-                                </a>
-                                <form action="{{ url('inventory:product_delete', kwargs={'pk': product.id}) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?');">
-                                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                                    <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" id="btn-delete-{{ product.id }}">
-                                        Delete
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-{% else %}
-    <div class="card" style="text-align: center; padding: 60px; color: var(--text-secondary);">
-        <h3>No products found</h3>
-        <p style="margin: 8px 0 20px;">Start adding products to your workspace catalog.</p>
-        <a href="{{ url('inventory:product_add') }}" class="btn btn-primary">Add First Product</a>
-    </div>
-{% endif %}
+                                <td class="py-3.5 px-4">
+                                    {% if business_type == 'pharmacy' and product.quantity <= 5 %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">{{ product.quantity }} (Low)</span>
+                                    {% elif business_type == 'provision_store' and product.reorder_level and product.quantity <= product.reorder_level %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">{{ product.quantity }} (Low)</span>
+                                    {% else %}
+                                        <span class="font-semibold text-slate-800">{{ product.quantity }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3.5 px-4 font-bold text-emerald-800 font-mono">₦{{ product.unit_price }}</td>
+                                {% if business_type == 'pharmacy' %}
+                                    <td class="py-3.5 px-4 font-mono text-slate-600">{{ product.batch_number or '-' }}</td>
+                                    <td class="py-3.5 px-4 text-slate-600">{{ product.manufacturer or '-' }}</td>
+                                    <td class="py-3.5 px-4 text-slate-600">{{ product.expiry_date or '-' }}</td>
+                                    <td class="py-3.5 px-4 font-mono text-slate-600">{{ product.nafdac_number or '-' }}</td>
+                                {% elif business_type == 'provision_store' %}
+                                    <td class="py-3.5 px-4 text-slate-600">{{ product.reorder_level or '-' }}</td>
+                                    <td class="py-3.5 px-4 font-mono text-slate-600">{{ product.supplier_code or '-' }}</td>
+                                {% endif %}
+                                <td class="py-3.5 px-4 text-right">
+                                    <div class="inline-flex items-center gap-1.5">
+                                        <a href="{{ url('inventory:product_edit', kwargs={'pk': product.id}) }}" class="btn btn-secondary text-xs py-1 px-2.5 rounded-lg border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 inline-flex items-center gap-1" id="btn-edit-{{ product.id }}">
+                                            <i class="fas fa-pen-to-square text-[10px]"></i> Edit
+                                        </a>
+                                        <form action="{{ url('inventory:product_delete', kwargs={'pk': product.id}) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete {{ product.name }}?');">
+                                            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                                            <button type="submit" class="btn btn-danger text-xs py-1 px-2.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 inline-flex items-center gap-1" id="btn-delete-{{ product.id }}">
+                                                <i class="fas fa-trash-can text-[10px]"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-16 px-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto mb-4 border border-emerald-200/60 text-xl shadow-sm">
+                <i class="fas fa-boxes-stacked"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">No Products in Catalog</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-6 leading-relaxed">
+                Your store catalog is currently empty. Add your first product to start tracking inventory and processing sales.
+            </p>
+            <a href="{{ url('inventory:product_add') }}" class="btn btn-primary text-xs py-2.5 px-5 font-semibold inline-flex items-center gap-2 rounded-xl bg-[#1b4332] hover:bg-[#143326]" id="btn-add-first-product">
+                <i class="fas fa-plus"></i> Add First Product
+            </a>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

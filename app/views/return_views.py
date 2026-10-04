@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction, models
 from django.contrib import messages
 from app.models import Product, Sale, SaleItem, ReturnTransaction, ReturnItem, ExchangeItem, TenantProfile, Tenant
+from django.template.loader import render_to_string
+from app.utils import generate_pdf_from_html
 
 
 def return_list(request, tenant_slug):
@@ -60,13 +62,43 @@ def return_detail(request, tenant_slug, pk):
         tenant_id=request.tenant_id
     )
 
-    return render(request, 'inventory/return_detail.html', {
+    context = {
         'return_tx': return_tx,
         'sale': return_tx.sale,
         'returned_items': return_tx.returned_items.all(),
         'exchange_items': return_tx.exchange_items.all(),
         'business_type': request.business_type,
-    })
+    }
+    return render(request, 'inventory/return_detail.html', context)
+
+def return_pdf(request, tenant_slug, pk):
+    return_tx = get_object_or_404(
+        ReturnTransaction.objects.select_related('sale', 'user').prefetch_related(
+            'returned_items__product',
+            'returned_items__sale_item',
+            'exchange_items__product'
+        ),
+        pk=pk,
+        tenant_id=request.tenant_id
+    )
+
+    tenant_name = (
+        getattr(request, 'tenant_name', None)
+        or (request.tenant.name if getattr(request, 'tenant', None) else None)
+        or (return_tx.tenant.name if getattr(return_tx, 'tenant', None) else None)
+        or 'Store'
+    )
+    context = {
+        'return_tx': return_tx,
+        'sale': return_tx.sale,
+        'returned_items': return_tx.returned_items.all(),
+        'exchange_items': return_tx.exchange_items.all(),
+        'business_type': getattr(request, 'business_type', 'retail'),
+        'tenant_name': tenant_name,
+    }
+    filename = f"return_note_{return_tx.id}.pdf"
+    return generate_pdf_from_html('inventory/return_receipt_pdf.html', context, filename)
+
 
 
 def sale_lookup(request, tenant_slug):

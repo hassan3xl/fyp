@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Receipt #{{ sale.id }} - {{ tenant_name }}</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm 14mm;
+      @bottom-center {
+        content: "";
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Liberation Sans', 'DejaVu Sans', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      font-size: 11px;
+      line-height: 1.35;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .receipt-container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      page-break-inside: avoid;
+    }
+
+    /* Header */
+    .receipt-header {
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .store-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.3px;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .receipt-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #1b4332;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    .meta-cell {
+      text-align: right;
+      vertical-align: top;
+      font-size: 10px;
+      color: #475569;
+    }
+
+    .receipt-id {
+      font-family: 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 11px;
+    }
+
+    /* Key Details Bar */
+    .details-bar {
+      width: 100%;
+      border-collapse: collapse;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .details-bar td {
+      padding: 6px 10px;
+      vertical-align: middle;
+      font-size: 10px;
+    }
+
+    .details-bar .label {
+      font-size: 8.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .details-bar .val {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 10.5px;
+    }
+
+    .badge-paid {
+      display: inline-block;
+      background: #dcfce7;
+      color: #14532d;
+      border: 1px solid #86efac;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-adjusted {
+      display: inline-block;
+      background: #fef3c7;
+      color: #78350f;
+      border: 1px solid #fcd34d;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Items Table */
+    table.items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+    }
+
+    table.items-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 5px 8px;
+      border-top: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+      text-align: left;
+    }
+
+    table.items-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+      font-size: 10px;
+    }
+
+    table.items-table tr:last-child td {
+      border-bottom: 1px solid #cbd5e1;
+    }
+
+    .col-idx { width: 5%; text-align: center; color: #94a3b8; font-size: 9px; }
+    .col-desc { width: 52%; }
+    .col-price { width: 15%; text-align: right; }
+    .col-qty { width: 10%; text-align: center; font-weight: 600; }
+    .col-total { width: 18%; text-align: right; font-weight: 700; color: #0f172a; }
+
+    .item-name {
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .item-sku {
+      font-size: 8.5px;
+      color: #64748b;
+      font-family: 'Liberation Mono', monospace;
+      margin-left: 4px;
+    }
+
+    /* Summary Layout */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+    }
+
+    .summary-left {
+      width: 55%;
+      vertical-align: top;
+      padding-right: 15px;
+    }
+
+    .summary-right {
+      width: 45%;
+      vertical-align: top;
+    }
+
+    .payment-note-box {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-size: 9.5px;
+      color: #475569;
+      line-height: 1.4;
+    }
+
+    .payment-note-box strong {
+      color: #1e293b;
+    }
+
+    .totals-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .totals-table td {
+      padding: 3px 0;
+      font-size: 10.5px;
+      color: #475569;
+    }
+
+    .totals-table .val {
+      text-align: right;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .totals-table .row-subtotal td {
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+    }
+
+    .totals-table .row-adjustment td {
+      color: #991b1b;
+      font-size: 10px;
+    }
+
+    .totals-table .row-adjustment .val {
+      color: #991b1b;
+    }
+
+    .totals-table .row-exchange td {
+      color: #1e40af;
+      font-size: 10px;
+    }
+
+    .totals-table .row-exchange .val {
+      color: #1e40af;
+    }
+
+    .totals-table .row-total td {
+      border-top: 2px solid #0f172a;
+      padding-top: 6px;
+      margin-top: 4px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .totals-table .row-total .val {
+      font-size: 15px;
+      font-weight: 800;
+      color: #1b4332;
+    }
+
+    /* Compact Footer */
+    .receipt-footer {
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 8px;
+      text-align: center;
+      font-size: 8.5px;
+      color: #64748b;
+      line-height: 1.35;
+    }
+
+    .footer-heading {
+      font-weight: 700;
+      color: #334155;
+      font-size: 9.5px;
+      margin-bottom: 1px;
+    }
+  </style>
+</head>
+<body>
+<div class="receipt-container">
+
+  <!-- Header -->
+  <div class="receipt-header">
+    <table class="header-table">
+      <tr>
+        <td>
+          <div class="store-name">{{ tenant_name or 'Retail Store' }}</div>
+          <div class="receipt-title">Official Sales Receipt</div>
+        </td>
+        <td class="meta-cell">
+          <div class="receipt-id">#{{ sale.id }}</div>
+          <div>{{ sale.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Key Details Bar -->
+  <table class="details-bar">
+    <tr>
+      <td style="width: 25%;">
+        <span class="label">Served By</span>
+        <span class="val">{{ sale.cashier_name or (sale.user.display_name if sale.user else 'Staff') }}</span>
+      </td>
+      <td style="width: 25%;">
+        <span class="label">Payment Mode</span>
+        <span class="val">Cash / POS</span>
+      </td>
+      <td style="width: 25%;">
+        <span class="label">Items Count</span>
+        <span class="val">{{ items|length }} ({{ items|sum(attribute='quantity') }} units)</span>
+      </td>
+      <td style="width: 25%; text-align: right;">
+        <span class="label">Status</span>
+        {% if returns %}
+          <span class="badge-adjusted">{{ sale.status_display }}</span>
+        {% else %}
+          <span class="badge-paid">Paid &bull; Completed</span>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  <!-- Items Table (Stripped down to essential columns) -->
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th class="col-idx">#</th>
+        <th class="col-desc">Item Description</th>
+        <th class="col-price">Price</th>
+        <th class="col-qty">Qty</th>
+        <th class="col-total">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+        <tr>
+          <td class="col-idx">{{ loop.index }}</td>
+          <td class="col-desc">
+            <span class="item-name">{{ item.product.name }}</span>
+            {% if item.product.sku %}
+              <span class="item-sku">({{ item.product.sku }})</span>
+            {% endif %}
+          </td>
+          <td class="col-price">₦{{ item.unit_price }}</td>
+          <td class="col-qty">{{ item.quantity }}</td>
+          <td class="col-total">₦{{ item.line_total }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Summary Section -->
+  <table class="summary-table">
+    <tr>
+      <td class="summary-left">
+        <div class="payment-note-box">
+          <p><strong>Payment Status:</strong> Settled in Full</p>
+          {% if returns %}
+            <p style="margin-top: 3px; color: #92400e;">
+              <strong>Note:</strong> Contains return/exchange adjustments.
+            </p>
+          {% else %}
+            <p style="margin-top: 3px;">
+              All items verified and delivered in good condition.
+            </p>
+          {% endif %}
+        </div>
+      </td>
+      <td class="summary-right">
+        <table class="totals-table">
+          <tr class="row-subtotal">
+            <td>Subtotal:</td>
+            <td class="val">₦{{ sale.total_amount }}</td>
+          </tr>
+
+          {% if returns %}
+            {% if sale.total_refund_amount > 0 %}
+              <tr class="row-adjustment">
+                <td>Refund Adjustment:</td>
+                <td class="val">-₦{{ sale.total_refund_amount }}</td>
+              </tr>
+            {% endif %}
+
+            {% if sale.total_additional_collected > 0 %}
+              <tr class="row-exchange">
+                <td>Exchange Collected:</td>
+                <td class="val">+₦{{ sale.total_additional_collected }}</td>
+              </tr>
+            {% endif %}
+
+            <tr class="row-total">
+              <td>Net Total:</td>
+              <td class="val">₦{{ sale.net_total }}</td>
+            </tr>
+          {% else %}
+            <tr class="row-total">
+              <td>Total Paid:</td>
+              <td class="val">₦{{ sale.total_amount }}</td>
+            </tr>
+          {% endif %}
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Compact 1-Page Footer -->
+  <div class="receipt-footer">
+    <div class="footer-heading">Thank you for your business!</div>
+    <p>Please retain this receipt for returns or exchanges within 7 days &bull; Generated electronically</p>
+  </div>
+
+</div>
+</body>
+</html>

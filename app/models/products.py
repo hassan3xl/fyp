@@ -50,6 +50,21 @@ class Sale(TenantIsolatedModel):
         return f"Sale {self.id} - {self.total_amount}"
 
     @property
+    def cashier_name(self):
+        try:
+            if self.user:
+                return (
+                    getattr(self.user, 'display_name', None)
+                    or getattr(self.user, 'username', None)
+                    or (f"{self.user.first_name} {self.user.last_name}".strip() if self.user.first_name or self.user.last_name else None)
+                    or (self.user.email.split('@')[0].replace('.', ' ').replace('_', ' ').title() if getattr(self.user, 'email', None) else None)
+                    or "Staff"
+                )
+        except Exception:
+            pass
+        return "Staff"
+
+    @property
     def has_returns(self):
         return self.returns.exists()
 
@@ -170,6 +185,21 @@ class ReturnTransaction(TenantIsolatedModel):
 
     def __str__(self):
         return f"Return {self.id} for Sale {self.sale.id} ({self.get_return_type_display()})"
+
+    @property
+    def cashier_name(self):
+        try:
+            if self.user:
+                return (
+                    getattr(self.user, 'display_name', None)
+                    or getattr(self.user, 'username', None)
+                    or (f"{self.user.first_name} {self.user.last_name}".strip() if self.user.first_name or self.user.last_name else None)
+                    or (self.user.email.split('@')[0].replace('.', ' ').replace('_', ' ').title() if getattr(self.user, 'email', None) else None)
+                    or "Staff"
+                )
+        except Exception:
+            pass
+        return "Staff"
 
 
 class ReturnItem(TenantIsolatedModel):

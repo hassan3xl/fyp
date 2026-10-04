@@ -1,48 +1,169 @@
 {% if messages %}
-<div class="messages-container" style="margin-bottom: 20px; width: 100%; max-width: 1400px; margin-left: auto; margin-right: auto;">
+<div class="messages-container mb-6 w-full max-w-7xl mx-auto">
   {% for message in messages %}
     {% if 'rate-limit-' in message.tags %}
-      <div id="rate-limit-modal" style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background-color: rgba(9, 9, 11, 0.85); backdrop-filter: blur(8px); transition: opacity 0.3s ease;">
-        <div style="background-color: #0b0f19; border: 1px solid rgba(255, 23, 68, 0.3); border-radius: 12px; padding: 32px; max-width: 440px; width: 90%; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5);">
-          <div style="width: 64px; height: 64px; background-color: rgba(255, 23, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-            <svg style="width: 32px; height: 32px; color: #ff1744" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
+      <!-- Rate Limit Throttling Modal -->
+      <div
+        id="rate-limit-modal"
+        class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 select-none"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rate-limit-title"
+      >
+        <div
+          class="relative w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-6 sm:p-8 text-center overflow-hidden"
+          onclick="event.stopPropagation()"
+        >
+          <!-- Top Accent Line -->
+          <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 via-rose-500 to-amber-500"></div>
+
+          <!-- Close Button -->
+          <button
+            type="button"
+            onclick="document.getElementById('rate-limit-modal').remove()"
+            class="absolute top-4 right-4 w-8 h-8 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors"
+            title="Dismiss"
+          >
+            <i class="fas fa-xmark text-sm"></i>
+          </button>
+
+          <!-- Icon -->
+          <div class="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-600 flex items-center justify-center mx-auto mb-4 shadow-sm text-2xl">
+            <i class="fas fa-gauge-high"></i>
           </div>
-          <h3 style="color: #f8fafc; font-size: 20px; font-weight: 700; margin-bottom: 8px; font-family: \"Plus Jakarta Sans\", sans-serif;">Rate Limit Exceeded</h3>
-          <p style="color: #94a3b8; font-size: 14px; line-height: 1.5; margin-bottom: 24px; font-family: \"Plus Jakarta Sans\", sans-serif;">You have exceeded the maximum request limit. Please wait a moment before trying again.</p>
-          <div style="background: rgba(255, 255, 255, 0.04); padding: 12px 24px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08); display: inline-block; font-weight: 600; color: #f8fafc; font-family: \"Plus Jakarta Sans\", sans-serif; margin-bottom: 24px;">
-            Retry in <span style="color: #00e5ff" id="rate-limit-timer-base">...</span> seconds
+
+          <!-- Pill Badge -->
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-bold uppercase tracking-wider mb-2.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+            <span>HTTP 429 • Sliding-Window Throttling</span>
           </div>
-          <div>
-            <button onclick="document.getElementById('rate-limit-modal').remove()" style="background-color: #f8fafc; color: #0b0f19; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background-color 0.2s; width: 100%;">Dismiss</button>
+
+          <!-- Title & Description -->
+          <h3 id="rate-limit-title" class="text-xl font-bold text-slate-900 tracking-tight">
+            Rate Limit Exceeded
+          </h3>
+          <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+            Your store workspace has reached its allocated request limit on the shared infrastructure. Sliding-window throttling is actively protecting tenant resources and mitigating noisy-neighbor contention.
+          </p>
+
+          <!-- Countdown Box & Progress Bar -->
+          <div class="my-5 p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-center space-y-2">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Cooldown Window
+            </div>
+            <div class="flex items-baseline justify-center gap-1.5">
+              <span id="rate-limit-timer-base" class="text-3xl font-extrabold font-mono text-slate-900">60</span>
+              <span class="text-xs font-semibold text-slate-500">seconds</span>
+            </div>
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden mt-2">
+              <div
+                id="rate-limit-progress-bar"
+                class="bg-gradient-to-r from-amber-500 to-rose-500 h-1.5 rounded-full transition-all duration-1000 ease-linear"
+                style="width: 100%;"
+              ></div>
+            </div>
+            <div id="rate-limit-status-note" class="text-[11px] text-slate-400">
+              Automatic unlock when timer completes
+            </div>
+          </div>
+
+          <!-- Architectural Info Strip -->
+          <div class="grid grid-cols-2 gap-2 text-left mb-6 text-[11px]">
+            <div class="p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/60">
+              <span class="text-slate-400 block font-medium text-[10px] uppercase tracking-wider">Protection</span>
+              <span class="font-bold text-slate-800">Resource Isolation</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/60">
+              <span class="text-slate-400 block font-medium text-[10px] uppercase tracking-wider">Algorithm</span>
+              <span class="font-bold text-slate-800">Sliding Window (60s)</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="rate-limit-dismiss-btn"
+              onclick="document.getElementById('rate-limit-modal').remove()"
+              class="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors cursor-pointer"
+            >
+              Dismiss Notice
+            </button>
           </div>
         </div>
       </div>
+
       <script>
         (function () {
+          const modal = document.getElementById("rate-limit-modal");
+          if (!modal) return;
+
           const tags = "{{ message.tags }}";
           const match = tags.match(/rate-limit-(\d+)/);
-          let timeLeft = match ? parseInt(match[1]) : 60;
+          const initialTime = match ? parseInt(match[1], 10) : 60;
+          let timeLeft = initialTime;
+
           const timerEl = document.getElementById("rate-limit-timer-base");
+          const progressBar = document.getElementById("rate-limit-progress-bar");
+          const statusNote = document.getElementById("rate-limit-status-note");
+          const dismissBtn = document.getElementById("rate-limit-dismiss-btn");
+
           if (timerEl) {
             timerEl.innerText = timeLeft;
-            const interval = setInterval(() => {
+
+            const interval = setInterval(function () {
               timeLeft -= 1;
               if (timeLeft <= 0) {
                 clearInterval(interval);
-                document.getElementById("rate-limit-modal")?.remove();
+                timerEl.innerText = "0";
+                if (progressBar) progressBar.style.width = "0%";
+                if (statusNote) {
+                  statusNote.innerText = "Cooldown complete! You can resume requests.";
+                  statusNote.className = "text-[11px] font-semibold text-emerald-600";
+                }
+                if (dismissBtn) {
+                  dismissBtn.innerText = "Continue to App";
+                  dismissBtn.className = "w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-white bg-[#1b4332] hover:bg-[#143326] transition-colors cursor-pointer";
+                }
+                setTimeout(function () {
+                  modal.remove();
+                }, 1200);
               } else {
                 timerEl.innerText = timeLeft;
+                if (progressBar && initialTime > 0) {
+                  const pct = Math.max(0, Math.min(100, (timeLeft / initialTime) * 100));
+                  progressBar.style.width = pct + "%";
+                }
               }
             }, 1000);
           }
+
+          // Close on backdrop click
+          modal.addEventListener("click", function (e) {
+            if (e.target === modal) {
+              modal.remove();
+            }
+          });
+
+          // Close on Escape key
+          document.addEventListener("keydown", function escListener(e) {
+            if (e.key === "Escape") {
+              modal.remove();
+              document.removeEventListener("keydown", escListener);
+            }
+          });
         })();
       </script>
     {% else %}
-      <div class="alert alert-{{ 'error' if 'error' in message.tags else 'info' }}" style="padding: 12px 16px; margin-bottom: 10px; border-radius: 6px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; {% if 'error' in message.tags %}background-color: rgba(255, 23, 68, 0.1); border: 1px solid rgba(255, 23, 68, 0.3); color: #ff1744;{% else %}background-color: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0, 229, 255, 0.3); color: #00e5ff;{% endif %}">
-        <span>{{ message }}</span>
-        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px;">&times;</button>
+      <div class="alert-box mb-3 p-3.5 rounded-xl border flex items-center justify-between gap-3 text-xs font-semibold {% if 'error' in message.tags or 'danger' in message.tags %}bg-rose-50 border-rose-200/80 text-rose-800{% elif 'success' in message.tags %}bg-emerald-50 border-emerald-200/80 text-emerald-800{% elif 'warning' in message.tags %}bg-amber-50 border-amber-200/80 text-amber-800{% else %}bg-blue-50 border-blue-200/80 text-blue-800{% endif %}">
+        <div class="flex items-center gap-2.5">
+          <i class="fas {% if 'error' in message.tags or 'danger' in message.tags %}fa-circle-exclamation text-rose-500{% elif 'success' in message.tags %}fa-circle-check text-emerald-500{% elif 'warning' in message.tags %}fa-triangle-exclamation text-amber-500{% else %}fa-circle-info text-blue-500{% endif %} text-sm shrink-0"></i>
+          <span>{{ message }}</span>
+        </div>
+        <button type="button" onclick="this.closest('.alert-box').remove()" class="text-slate-400 hover:text-slate-700 transition-colors p-1" title="Dismiss">
+          <i class="fas fa-xmark text-xs"></i>
+        </button>
       </div>
     {% endif %}
   {% endfor %}

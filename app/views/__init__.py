@@ -11,10 +11,12 @@ from .product_views import (
     sale_list,
     sale_new,
     sale_detail,
+    sale_pdf,
 )
 from .return_views import (
     return_list,
     return_detail,
+    return_pdf,
     sale_return_new,
     sale_lookup,
 )
@@ -34,8 +36,10 @@ __all__ = [
     'sale_list',
     'sale_new',
     'sale_detail',
+    'sale_pdf',
     'return_list',
     'return_detail',
+    'return_pdf',
     'sale_return_new',
     'sale_lookup',
 ]
